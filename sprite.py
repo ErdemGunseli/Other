@@ -14,16 +14,11 @@ pygame.init()
 size = (640,480)
 screen = pygame.display.set_mode(size)
 
-# The following hold the x and y positions of the snowflakes.
-snowflakeXPositions = []
-snowflakeYPositions = []
-
-
 # The title of the new window:
 pygame.display.set_caption("Snow")
 
 # Defines a class which is a sprite.
-class snow(pygame.sprite.Sprite):
+class Snow(pygame.sprite.Sprite):
  
  # Define the constructor for snow
  def __init__(self, color, width, height):
@@ -37,30 +32,20 @@ class snow(pygame.sprite.Sprite):
 
     # Sets the position of the sprite within the range.
     self.rect = self.image.get_rect()
-    detachedFromAll = False
-  
-    # Ensure that none of the snowflakes overlap.
-    while detachedFromAll == False:
-        self.rect.x = random.randrange(0, 600)
-        self.rect.y = random.randrange(0, 400)
-
-        detachedFromAll = True
-        # If it is the first snowflake, it can go anywhere.
-        if len(snowflakeXPositions) != 0: 
-
-            # Goes through the x and y positions of all of the previous snowflakes.
-            for i in snowflakeXPositions: 
-                for j in snowflakeYPositions:
-                    if (self.rect.x + 10 > i and self.rect.x < i) or (self.rect.y + 10 > j and self.rect.y < j):
-                        detachedFromAll = False 
-                    # If there was a snowflake within 10 px of the current snowflake, the new snowflake cannot go there.
-     
-    # Adds the x and y positions of the snowflakes to lists to ensure that new snowflakes don't overlap with the old ones.
-    snowflakeXPositions.append(self.rect.x)
-    snowflakeYPositions.append(self.rect.y)
+    self.rect.x = random.randrange(0, 600)
+    self.rect.y = random.randrange(0, 400)
 
 
-        
+
+def detached(mySnow, snowGroup): # Checks if the new snowflake is detached from all previously creted ones.
+    for snow in snowGroup:
+        # If for all of the snowflakes, the difference in x or y coordinates is 5 or less, it is not detached.
+        if (abs(mySnow.rect.x - snow.rect.x) < 6) or (abs(mySnow.rect.y - snow.rect.y) < 6):
+            return False
+
+    return True
+
+
 
 # When this is true, the game will end:
 done = False
@@ -71,10 +56,15 @@ allSpritesGroup = pygame.sprite.Group() # A list of all sprites.
 numberOfFlakes = 50 # There will be 50 snowflakes.
 
 for x in range(numberOfFlakes):
-    mySnow = snow(WHITE, 5, 5) # The snowflakes are white, 5px squares.
-    snowGroup.add(mySnow) # Adds the new snowflake to the group of snowflakes.
-    allSpritesGroup.add(mySnow) # Adds the new snowflake to the group of all sprites.
+    isDetached = False
+    while not isDetached:
+        mySnow = Snow(WHITE, 5, 5) # The snowflakes are white, 5px squares.
 
+        if detached(mySnow, snowGroup):
+            snowGroup.add(mySnow) # Adds the new snowflake to the group of snowflakes.
+            allSpritesGroup.add(mySnow) # Adds the new snowflake to the group of all sprites.
+            isDetached = True   
+  
 clock = pygame.time.Clock()
 
 ### This is the Game Loop:
@@ -96,8 +86,6 @@ while not done:
 
 
 
-    
-
     #This will flip the display to reveal the new position of objects:
     pygame.display.flip()
 
@@ -107,5 +95,3 @@ while not done:
 #endwhile - The end of the game loop.
 
 pygame.quit()
-
-        

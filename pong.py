@@ -1,4 +1,6 @@
 import pygame
+import math
+import random
 from pygame.constants import K_UP
 pygame.font.init()
 
