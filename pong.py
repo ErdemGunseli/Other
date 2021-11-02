@@ -46,9 +46,36 @@ done = False
 
 clock = pygame.time.Clock()
 
-def ballManager(paddX, paddY, ballX, ballY, xDirection, yDirection, ballWidth, score, highScore, ballColour): #This function moves the ball and changes the score. It also changes the colour of the ball depending on the score
 
-    # If the ball has collided with the right wall, make it bounce.
+   
+### This is the Game Loop:
+while not done:
+    
+    #User inputs and controls:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            done = True
+        #endif    
+    #next
+    
+    keys = pygame.key.get_pressed()
+    # If the up key is pressed and the paddle won't go offscreen, move it up.
+    if keys[pygame.K_UP] and (paddY - paddMovePerFrame >= 0):
+        paddY -= paddMovePerFrame
+    #endif
+
+    # If the down key is pressed and the paddle won't go offscreen, move it down.
+    if keys[pygame.K_DOWN] and (paddY + paddMovePerFrame <= 420):
+        paddY += paddMovePerFrame
+    #endif
+
+    ##The Game Logic:
+    screen.fill(BLACK)
+
+    pygame.draw.rect(screen, ballColour, (ballX,ballY,ballWidth,ballWidth)) #Ball
+    pygame.draw.rect(screen, WHITE, (paddX,paddY,paddXLength,paddYLength)) #Paddle
+
+     # If the ball has collided with the right wall, make it bounce.
     if ballX >= 640 - ballWidth:
         xDirection = -xDirection
 
@@ -86,36 +113,6 @@ def ballManager(paddX, paddY, ballX, ballY, xDirection, yDirection, ballWidth, s
     # Move the ball in the given direction.
     ballX += xDirection
     ballY += yDirection
-    return ballX, ballY, xDirection, yDirection, score, highScore, ballColour
-   
-### This is the Game Loop:
-while not done:
-    
-    #User inputs and controls:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
-        #endif    
-    #next
-    
-    keys = pygame.key.get_pressed()
-    # If the up key is pressed and the paddle won't go offscreen, move it up.
-    if keys[pygame.K_UP] and (paddY - paddMovePerFrame >= 0):
-        paddY -= paddMovePerFrame
-    #endif
-
-    # If the down key is pressed and the paddle won't go offscreen, move it down.
-    if keys[pygame.K_DOWN] and (paddY + paddMovePerFrame <= 420):
-        paddY += paddMovePerFrame
-    #endif
-
-    ##The Game Logic:
-    screen.fill(BLACK)
-
-    pygame.draw.rect(screen, ballColour, (ballX,ballY,ballWidth,ballWidth)) #Ball
-    pygame.draw.rect(screen, WHITE, (paddX,paddY,paddXLength,paddYLength)) #Paddle
-
-    ballX, ballY, xDirection, yDirection, score, highScore, ballColour = ballManager(paddX, paddY, ballX, ballY, xDirection, yDirection, ballWidth, score, highScore, ballColour)
 
     score_font = pygame.font.SysFont('Comic Sans MS', 15)
     yourScore = score_font.render("Your Score:", False, YELLOW)
