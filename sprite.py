@@ -20,31 +20,38 @@ pygame.display.set_caption("Snow")
 # Defines a class which is a sprite.
 class Snow(pygame.sprite.Sprite):
  
- # Define the constructor for snow
- def __init__(self, color, width, height):
+    # Define the constructor for snow
+    def __init__(self, color, width, height, speed):
 
-     # Calls the sprite constructor.
-    super().__init__()
+        # Calls the sprite constructor.
+        super().__init__()
 
-    # Creates a sprite and fills it with 'color'.
-    self.image = pygame.Surface([width,height])
-    self.image.fill(color)
+        self.speed = speed
 
-    # Sets the position of the sprite within the range.
-    self.rect = self.image.get_rect()
-    self.rect.x = random.randrange(0, 600)
-    self.rect.y = random.randrange(0, 400)
+        # Creates a sprite and fills it with 'color'.
+        self.image = pygame.Surface([width,height])
+        self.image.fill(color)
 
+        # Sets the position of the sprite within the range.
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randrange(0, 600)
+        self.rect.y = random.randrange(0, 400)
 
+    # Class update function 
+    def update(self):
+        if self.rect.y + 5 <= 480:
+            self.rect.y = self.rect.y + self.speed
+        else:
+            self.rect.y = 0
 
+                                                                             
 def detached(mySnow, snowGroup): # Checks if the new snowflake is detached from all previously creted ones.
     for snow in snowGroup:
-        # If for all of the snowflakes, the difference in x or y coordinates is 5 or less, it is not detached.
-        if (abs(mySnow.rect.x - snow.rect.x) < 6) or (abs(mySnow.rect.y - snow.rect.y) < 6):
+        # If for all of the snowflakes, the difference in x or y coordinates is 5 or less, it is not detached. Used 20 to make them spread apart.
+        if (abs(mySnow.rect.x - snow.rect.x) < 20) and (abs(mySnow.rect.y - snow.rect.y) < 20):
             return False
 
     return True
-
 
 
 # When this is true, the game will end:
@@ -57,8 +64,8 @@ numberOfFlakes = 50 # There will be 50 snowflakes.
 
 for x in range(numberOfFlakes):
     isDetached = False
-    while not isDetached:
-        mySnow = Snow(WHITE, 5, 5) # The snowflakes are white, 5px squares.
+    while not isDetached: #Repeats until the snowflake generated is detached from all others.
+        mySnow = Snow(WHITE, 5, 5,1) # The snowflakes are white, 5px squares with a speed if 1px/frame.
 
         if detached(mySnow, snowGroup):
             snowGroup.add(mySnow) # Adds the new snowflake to the group of snowflakes.
@@ -78,6 +85,7 @@ while not done:
     #Next
 
     ##The Game Logic:
+    allSpritesGroup.update()
 
     #The screen background is BLACK:
     screen.fill(BLACK)
