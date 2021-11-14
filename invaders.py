@@ -36,12 +36,58 @@ bulletGroup = pygame.sprite.Group() # A list of bullets.
 allSpritesGroup = pygame.sprite.Group() # A list of all sprites.
 
 
-numberOfEnemies = 20 # There will be 20 enemies.
+invaderCount = 20 # There will be 20 enemies.
 
 playerMovePerFrame = 5 # The number of px the player will move per frame.
 
+defaultFont = pygame.font.SysFont('Comic Sans MS', 15)
+
 # The title of the new window:
 pygame.display.set_caption("Invaders")
+
+
+class GameLogic():
+
+    def __init__(self):
+        pass
+
+    def startGame(self, allSpritesGroup):
+        allSpritesGroup = []
+        self.generateInvaders()
+        self.generatePlayer(self)
+        return allSpritesGroup
+
+    def generateInvaders():
+        # Generates the invaders.
+        for x in range(invaderCount):
+            myInvader = Invaders(PURPLE, 10, 10, 1) # The enemies are blue, 10px squares with a speed if 1px/frame
+            invaderGroup.add(myInvader) # Adds the new enemy to the group of enemy.
+            allSpritesGroup.add(myInvader) # Adds the new snowflake to the group of all sprites.
+
+    def generatePlayer(self):    
+        # Generates the player.
+        self.myPlayer = Player(YELLOW, 10, 10, 50) # The player is a 10px square.
+        allSpritesGroup.add(self.myPlayer)
+
+
+    def update(self):
+        if self.myPlayer.alive:
+            screen.fill(BLACK)
+
+            allSpritesGroup.update()
+
+            allSpritesGroup.draw(screen)
+        
+            pygame.display.flip()
+
+            pygame.time.Clock().tick(60)
+        else:
+            defeatDisplay = defaultFont.render("DEFEAT", False, RED) #TODO: Not working, FIX
+            screen.blit(defeatDisplay, (320, 240))
+        
+    
+
+
 
 # Defines a class which is a sprite.
 class Invaders(pygame.sprite.Sprite):
@@ -75,7 +121,6 @@ class Invaders(pygame.sprite.Sprite):
         self.rect.y += self.ySpeed
        
 
-
 class Player(pygame.sprite.Sprite):
 
     def __init__(self, color, width, height, bulletCount): # Constructor
@@ -93,6 +138,10 @@ class Player(pygame.sprite.Sprite):
         self.width = width
         self.height = height
 
+        self.quit = False
+
+        self.alive = True
+
         # Creates a sprite and fills it with 'color'.
         self.image = pygame.Surface([width,height])
         self.image.fill(color)
@@ -103,6 +152,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.y =  470 
        
     def bulletShooter(self):
+        # Shoots a bullet if there are any.
         if self.bulletCount > 0:
             myBullet = Bullet(self.rect.x + 0.5 * self.width, self.rect.y )
             bulletGroup.add(myBullet)
@@ -110,33 +160,77 @@ class Player(pygame.sprite.Sprite):
 
             self.bulletCount -= 1
 
-    def playerScoreDisplayer(self):
-        defaultFont = pygame.font.SysFont('Comic Sans MS', 15)
+    def playerScoreDisplayer(self): # TODO: Move this to the game class.
+        # Displays information.
         myLives = defaultFont.render("LIVES:  {}".format(self.lives), False, RED)
-        muBulletCount = defaultFont.render("AMMO: {}".format(self.bulletCount), False, RED)
+        myBulletCount = defaultFont.render("AMMO: {}".format(self.bulletCount), False, RED)
         myScore = defaultFont.render("SCORE: {}".format(self.score), False, RED)
+        myInvaderCount = defaultFont.render("INVADERS LEFT:  {}".format(len(invaderGroup)), False, RED)
         
         screen.blit(myLives, (20,0))
-        screen.blit(muBulletCount, (20, 20))
+        screen.blit(myBulletCount, (20, 20))
         screen.blit(myScore, (20, 40))
-
+        screen.blit(myInvaderCount, (20, 60))
         
     def decreaseLife(self):
-        self.lives -= 1
+        if self.lives > 0:
+            self.lives -= 1
+        else:
+            self.alive = False
 
-    def increaseScore(self):
-        self.score += 1
+    def setScore(self, score):
+        # Sets the score of the player.
+        self.score = score
         
 
     def setPlayerSpeed(self, coordinate, speed):
+        # Sets the player's speed, the direction of which is determined by the argument passed.
         if coordinate == "x":
             self.xSpeed = speed
         elif coordinate == "y":
             self.ySpeed = speed
 
     def update(self):
+
+        # Gets the player input.
+        self.playerInput()
         self.rect.x += self.xSpeed
         self.rect.y += self.ySpeed
+
+        # Sets the player's score depending on the number of enemies left and displays it.
+        self.setScore((invaderCount - len(invaderGroup)) * 10)
+        self.playerScoreDisplayer()
+
+        # Checks if any invader has collided with the player and removes that invader from the invader group.
+        hitPlayerGroup = pygame.sprite.spritecollide(self, invaderGroup, True)
+    
+        # Calls the function that decreases the player's lives.
+        for i in hitPlayerGroup:
+            self.decreaseLife()
+
+    def playerInput(self):
+
+        # User Inputs:
+        # Since the player can move up and down as well, the arguments include which axis to move the player in.
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.quit = True
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_a:
+                    self.setPlayerSpeed("x",-5)
+                if event.key == pygame.K_d:
+                    self.setPlayerSpeed("x",5)
+                if event.key == pygame.K_w:
+                    self.setPlayerSpeed("y",-5)
+                if event.key == pygame.K_s:
+                    self.setPlayerSpeed("y",5)
+                if event.key == pygame.K_SPACE:
+                    self.bulletShooter()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_a or event.key == pygame.K_d:
+                    self.setPlayerSpeed("x",0)
+                elif event.key == pygame.K_w or event.key == pygame.K_s:
+                    self.setPlayerSpeed("y",0)
 
         # Ensures that the player cannot leave the screen:
         if self.rect.x < 0: self.rect.x = 0
@@ -162,77 +256,22 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y = ySpawn
 
     def update(self):
-        self.rect.y -= 2
+        self.rect.y -= 2 #Moves up
+        
+        for i in bulletGroup: # Removes invaders which have been hit by bullets
+            pygame.sprite.spritecollide(i, invaderGroup, True)
+        
 
 
-# When this is true, the game will end:
+
+GameLogic.startGame(GameLogic, allSpritesGroup)
 done = False
 
-for x in range(numberOfEnemies):
-        myInvader = Invaders(PURPLE, 10, 10, 1) # The enemies are blue, 10px squares with a speed if 1px/frame
-        invaderGroup.add(myInvader) # Adds the new enemy to the group of enemy.
-        allSpritesGroup.add(myInvader) # Adds the new snowflake to the group of all sprites.
-
-# I have removed the function that ensures that the enemies are detached.
- 
-myPlayer = Player(YELLOW, 10, 10, 50) # The player is a 10px square.
-allSpritesGroup.add(myPlayer)
-
-
-clock = pygame.time.Clock()
-
 ### This is the Game Loop:
-while not done:
-      #The screen background is BLACK:
-    screen.fill(BLACK)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_a:
-                myPlayer.setPlayerSpeed("x",-5)
-            if event.key == pygame.K_d:
-                myPlayer.setPlayerSpeed("x",5)
-            if event.key == pygame.K_w:
-                myPlayer.setPlayerSpeed("y",-5)
-            if event.key == pygame.K_s:
-                myPlayer.setPlayerSpeed("y",5)
-            if event.key == pygame.K_SPACE:
-                myPlayer.bulletShooter()
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_a or event.key == pygame.K_d:
-                myPlayer.setPlayerSpeed("x",0)
-            elif event.key == pygame.K_w or event.key == pygame.K_s:
-                myPlayer.setPlayerSpeed("y",0)
+while GameLogic.myPlayer.quit == False: 
     
-    ##The Game Logic:
-    allSpritesGroup.update()
-  
-    ##TODO: When an invader hits the player, add 5 to the score.
+    GameLogic.update(GameLogic)
 
-    # Checks if any invader has collided with the player and removes that invader from the invader group.
-    hitPlayerGroup = pygame.sprite.spritecollide(myPlayer, invaderGroup, True)
-    
-    for i in hitPlayerGroup:
-        myPlayer.decreaseLife()
 
-    for i in bulletGroup: #NOT WORKING>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        hitByBulletGroup = pygame.sprite.spritecollide(i, invaderGroup, True)
-        myPlayer.increaseScore()
-    
-    
-    myPlayer.playerScoreDisplayer()
-   
-  
-    allSpritesGroup.draw(screen)
-   
-
-    #This will flip the display to reveal the new position of objects:
-    pygame.display.flip()
-
-    #The clock ticks over:
-    clock.tick(60)
-
-#endwhile - The end of the game loop.
 
 pygame.quit()
