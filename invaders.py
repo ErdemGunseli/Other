@@ -57,6 +57,22 @@ class GameLogic():
         self.generatePlayer(self)
         return allSpritesGroup
 
+    def endGame(self):
+        # Displays end message and awaits input to restart game.
+        screen.fill(BLACK)
+        defeatDisplay = defaultFont.render("GAME OVER \n  PRESS ESC TO RESTART", False, RED)
+        screen.blit(defeatDisplay, (160, 200))
+
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:    
+                    for i in invaderGroup:
+                        i.kill()
+                    for j in bulletGroup:
+                        j.kill()
+                    self.myPlayer.kill()
+                    GameLogic.startGame(GameLogic, allSpritesGroup)
+
     def generateInvaders():
         # Generates the invaders.
         for x in range(invaderCount):
@@ -77,15 +93,12 @@ class GameLogic():
             allSpritesGroup.update()
 
             allSpritesGroup.draw(screen)
-        
-            pygame.display.flip()
-
-            pygame.time.Clock().tick(60)
         else:
-            defeatDisplay = defaultFont.render("DEFEAT", False, RED) #TODO: Not working, FIX
-            screen.blit(defeatDisplay, (320, 240))
-        
-    
+            self.endGame(self)
+        pygame.display.flip()
+        pygame.time.Clock().tick(60)
+
+            
 
 
 
@@ -173,7 +186,7 @@ class Player(pygame.sprite.Sprite):
         screen.blit(myInvaderCount, (20, 60))
         
     def decreaseLife(self):
-        if self.lives > 0:
+        if self.lives > 1:
             self.lives -= 1
         else:
             self.alive = False
@@ -207,6 +220,7 @@ class Player(pygame.sprite.Sprite):
         # Calls the function that decreases the player's lives.
         for i in hitPlayerGroup:
             self.decreaseLife()
+
 
     def playerInput(self):
 
@@ -270,6 +284,7 @@ done = False
 ### This is the Game Loop:
 while GameLogic.myPlayer.quit == False: 
     
+
     GameLogic.update(GameLogic)
 
 
