@@ -98,7 +98,7 @@ class GameLogic():
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
-            
+      
 
 
 
