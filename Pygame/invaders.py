@@ -1,4 +1,3 @@
-
 import pygame
 import random
 import math
@@ -10,9 +9,10 @@ from pygame.constants import K_UP
 pygame.font.init()
 
 #TODO: Improve movement.
-#TODO: Have the while loop minimised.
 #TODO: Make multiple levels.
-#TODO: Make the enemies disappear when hit and add 5 to the bullet count as well as 1 to the score.
+
+# WASD is used to move and SPACE is used to shoot. <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
 # Colours:
 BLACK = (0,0,0)
@@ -283,10 +283,5 @@ done = False
 
 ### This is the Game Loop:
 while GameLogic.myPlayer.quit == False: 
-    
-
     GameLogic.update(GameLogic)
-
-
-
 pygame.quit()

@@ -48,9 +48,6 @@ while not done:
     pygame.draw.circle(screen, YELLOW, (40,100),40,0)
 
 
-    
-
-
 
     #Experimenting
     #pygame.draw.line(screen, YELLOW, (0,0),(100,100),width=20)
