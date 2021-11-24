@@ -1,5 +1,3 @@
-
-
 distinct_prime_factors = []
 productOfDistinctPrimeFactors = 1
 
