@@ -276,12 +276,12 @@ class Bullet(pygame.sprite.Sprite):
             pygame.sprite.spritecollide(i, invaderGroup, True)
         
 
-
+GameLogic
 
 GameLogic.startGame(GameLogic, allSpritesGroup)
 done = False
 
 ### This is the Game Loop:
 while GameLogic.myPlayer.quit == False: 
-    GameLogic.update(GameLogic)
+    GameLogic.update()
 pygame.quit()
