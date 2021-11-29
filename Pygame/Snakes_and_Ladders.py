@@ -128,10 +128,6 @@ numberOfSnakes = len(snakePositions)
 numberOfLadders = len(ladderPositions)
 
 
-
-
-
-
 done = False
 
 clock = pygame.time.Clock()
@@ -150,13 +146,8 @@ while not done:
             done = True
 
 
-    
 
-
-
- 
     for i in range(len(playerGroup)): # Should be i in playerGroup - current state for testing purposes.
-        pygame.time.wait(2000) # Not Responding if there is a time delay <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         print("Player {}'s turn! ".format(str(i + 1)))
         playerGroup[i].move()
 
