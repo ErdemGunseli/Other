@@ -8,13 +8,18 @@ BLUE = (50,50,255)
 YELLOW = (255,255,0)
 
 pygame.init()
-size = (640,480)
-screen = pygame.display.set_mode(size)
+#size = (640,480)
+#screen = pygame.display.set_mode(size)
 
-pygame.display.set_caption("Snakes and Ladders")
+#pygame.display.set_caption("Snakes and Ladders")
 
 
 class GameLogic():
+
+    def getData():
+        dataFile = open("Gateway_Positions.txt", "r")
+        data = dataFile.read()
+        print(data)
 
     def generatePlayers(): # Generates Players
         numberOfPlayers = int(input("How many players will there be?\n"))
@@ -44,8 +49,6 @@ class GameLogic():
         GameLogic.generatePlayers()
         
 
-class GameBoard():
-    pass
 
 class Gateway(): # The parent class of snakes and ladders.
 
@@ -75,11 +78,13 @@ class Player():
 
 
     def move(self): # Moves the players
+        global done
+
         diceRoll = diceGroup[0].diceRoll()
 
         print("They were in " + str(self.position))
 
-        if self.position + diceRoll <= 100: # The player cannot move past 100.
+        if self.position + diceRoll < 100: # The player cannot move past 100.
             self.position += diceRoll
 
             for i in gatewayPositions: # Checks the position of the player against a list of gateways to determine whether the player needs to be transported.
@@ -87,6 +92,13 @@ class Player():
                     self.position = i[1]
                     print("They went through a gateway.")
                     # TODO: break
+        elif self.position + diceRoll == 100:
+
+            print("Player {} has reached 100 and won the game! Congratulations!".format(playerGroup.index(self) + 1))
+            input()
+            done = True
+            return done
+
         print("They have been moved to " + str(self.position))
         print()
       
@@ -134,13 +146,13 @@ clock = pygame.time.Clock()
 
 GameLogic.startGame()
 
+#GameLogic.getData()
+
 ### This is the Game Loop:
 while not done:
     pygame.event.get()
-    screen.fill(WHITE)  
-    pygame.draw.rect(screen, BLUE, (10, 10, 10, 10))
-
-
+    #screen.fill(WHITE)  
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
@@ -148,13 +160,12 @@ while not done:
 
 
     for i in range(len(playerGroup)): # Should be i in playerGroup - current state for testing purposes.
-        print("Player {}'s turn! ".format(str(i + 1)))
+        print("Player {}'s turn! Press ENTER to roll the dice! ".format(str(i + 1), end = ""))
+        input()
         playerGroup[i].move()
 
 
-
-
-    pygame.display.flip()
+    #pygame.display.flip()
 
     #The clock ticks over:
     clock.tick(60)
@@ -162,5 +173,3 @@ while not done:
 
 
 pygame.quit()
-
-        
