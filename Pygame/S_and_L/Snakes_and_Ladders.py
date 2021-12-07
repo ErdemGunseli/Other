@@ -1,5 +1,7 @@
 import random
 
+# TODO: Import gateway positions from a seperate file.
+
 playerGroup = []
 snakeGroup = []
 ladderGroup = []
@@ -49,7 +51,7 @@ class GameLogic():
         while not done:
             for playerNumber in range(len(playerGroup)):
                 if not done:
-                    print("Player {}'s turn! Press ENTER to roll the dice! ".format(str(playerNumber + 1), end = ""))
+                    print("\nPlayer {}'s turn! Press ENTER to roll the dice!".format(str(playerNumber + 1)))
                     input()
                     position = playerGroup[playerNumber].move()
                     if position == 100: # Ends the game when a player has finished.
@@ -95,7 +97,7 @@ class Player():
         if self.position + diceRoll <= 100: # The player cannot move past 100.
             self.position += diceRoll
 
-        for snake in snakeGroup: # Checks the position of the player against a list of gateways to determine whether the player needs to be transported.
+            for snake in snakeGroup: # Checks the position of the player against a list of gateways to determine whether the player needs to be transported.
                 for ladder in ladderGroup:
                     if self.position == Snake.getEnterPos(snake):
                         self.position = Snake.getExitPos(snake)
@@ -104,7 +106,7 @@ class Player():
                         self.position = Ladder.getExitPos(ladder)
                         print("They went up a ladder.")
     
-        print("They have been moved to {}.\n.".format(str(self.position)))
+        print("They have been moved to {}.\n".format(str(self.position)))
       
         return self.position
 
