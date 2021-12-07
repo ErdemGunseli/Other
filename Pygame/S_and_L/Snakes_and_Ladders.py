@@ -1,53 +1,60 @@
-import pygame
 import random
 
-#Colours:
-BLACK = (0,0,0)
-WHITE = (255,255,255)
-BLUE = (50,50,255)
-YELLOW = (255,255,0)
+playerGroup = []
+snakeGroup = []
+ladderGroup = []
+diceGroup = []
 
-pygame.init()
-#size = (640,480)
-#screen = pygame.display.set_mode(size)
+# The entrance and exit positions for snakes and ladders:
+snakePositions = [(36, 6), (32, 10), (62, 18), (88, 24), (48, 26), (95, 56), (97, 78)]
+ladderPositions = [(1, 38), (4, 14), (8, 30), (21, 42), (28, 76), (50, 67), (71, 92), (86, 99)]
 
-#pygame.display.set_caption("Snakes and Ladders")
-
+# QoL variables
+numberOfSnakes = len(snakePositions)
+numberOfLadders = len(ladderPositions)
 
 class GameLogic():
 
-    def getData():
-        dataFile = open("Gateway_Positions.txt", "r")
-        data = dataFile.read()
-        print(data)
-
     def generatePlayers(): # Generates Players
-        numberOfPlayers = int(input("How many players will there be?\n"))
-        for i in range(numberOfPlayers):
+        numberOfPlayers = int(input("\nHow many players will there be?    "))
+        for player in range(numberOfPlayers):
             myPlayer = Player(0)
             playerGroup.append(myPlayer)
 
     def generateSnakes(): # Generates Snakes
-        for i in range(numberOfSnakes):
-            mySnake = Snake(snakePositions[0], snakePositions[1])
+        for snake in range(numberOfSnakes):
+            mySnake = Snake(snakePositions[snake][0], snakePositions[snake][1])
             snakeGroup.append(mySnake)
 
     def generateLadders():# Generates Ladders
-        for i in range(numberOfSnakes):
-            myLadder = Ladder(ladderPositions[0], ladderPositions[1])
-            snakeGroup.append(myLadder)
+        for ladder in range(numberOfLadders):
+            myLadder = Ladder(ladderPositions[ladder][0], ladderPositions[ladder][1])
+            ladderGroup.append(myLadder)
     
     def generateDice(): # Generates Dice
-        numberOfFaces = input("How many faces should the dice have?\n")
+        numberOfFaces = input("\nHow many faces should the dice have?     ")
         myDice = Dice(numberOfFaces)
         diceGroup.append(myDice)
 
     def startGame():# Generates Everything
+        print("\nWelcome to Snakes & Ladders!\n")
         GameLogic.generateSnakes()
         GameLogic.generateLadders()
         GameLogic.generateDice()
         GameLogic.generatePlayers()
-        
+        GameLogic.playGame()
+    
+    def playGame(): # Goes through each player and moves them. 
+        done = False
+        while not done:
+            for playerNumber in range(len(playerGroup)):
+                if not done:
+                    print("Player {}'s turn! Press ENTER to roll the dice! ".format(str(playerNumber + 1), end = ""))
+                    input()
+                    position = playerGroup[playerNumber].move()
+                    if position == 100: # Ends the game when a player has finished.
+                        done = True
+                        print("Player {} has reached 100 and won the game! Congratulations!".format(playerNumber + 1))
 
 
 class Gateway(): # The parent class of snakes and ladders.
@@ -56,67 +63,56 @@ class Gateway(): # The parent class of snakes and ladders.
         self.enterPos = enterPos
         self.exitPos = exitPos
 
+    def getEnterPos(self):
+        return self.enterPos
+    
+    def getExitPos(self):
+        return self.exitPos
+
 
 class Snake(Gateway): # Child of gateways - doesn't need any specialised attributes and only exists for flexibility.
 
     def __init__(self, enterPos, exitPos):
         super().__init__(enterPos, exitPos)
-       
 
 
 class Ladder(Gateway): # Child of gateways - doesn't need any specialised attributes and only exists for flexibility.
 
     def __init__(self, enterPos, exitPos):
         super().__init__(enterPos, exitPos)
-      
 
-
+   
 class Player():
 
     def __init__(self, position): # Takes in the position of the players.
         self.position = position
 
-
     def move(self): # Moves the players
-        global done
-
         diceRoll = diceGroup[0].diceRoll()
 
         print("They were in " + str(self.position))
 
-        if self.position + diceRoll < 100: # The player cannot move past 100.
+        if self.position + diceRoll <= 100: # The player cannot move past 100.
             self.position += diceRoll
 
-            for i in gatewayPositions: # Checks the position of the player against a list of gateways to determine whether the player needs to be transported.
-                if self.position == i[0]:
-                    self.position = i[1]
-                    print("They went through a gateway.")
-                    # TODO: break
-        elif self.position + diceRoll == 100:
-
-            print("Player {} has reached 100 and won the game! Congratulations!".format(playerGroup.index(self) + 1))
-            input()
-            done = True
-            return done
-
-        print("They have been moved to " + str(self.position))
-        print()
+        for snake in snakeGroup: # Checks the position of the player against a list of gateways to determine whether the player needs to be transported.
+                for ladder in ladderGroup:
+                    if self.position == Snake.getEnterPos(snake):
+                        self.position = Snake.getExitPos(snake)
+                        print("They went down a snake.")
+                    elif self.position == Ladder.getEnterPos(ladder):
+                        self.position = Ladder.getExitPos(ladder)
+                        print("They went up a ladder.")
+    
+        print("They have been moved to {}.\n.".format(str(self.position)))
       
         return self.position
-        # TODO: Snakes and Ladders transport player
-    
-    def update(self):
-        for player in playerGroup:
-            player.move()
-        
 
 
 class Dice():
 
     def __init__(self, numberOfFaces): # For flexibility, the parameters include the number of faces of the die as well as the number of dice.
         self.numberOfFaces = int(numberOfFaces)
-    
-    
     
     def diceRoll(self): # Rolls the dice and determines the score.
 
@@ -125,51 +121,4 @@ class Dice():
         return result
         
 
-playerGroup = []
-snakeGroup = []
-ladderPositions = []
-diceGroup = []
-
-# The entrance and exit positions for snakes and ladders:
-snakePositions = [(36, 6), (32, 10), (62, 18), (88, 24), (48, 26), (95, 56), (97, 78)]
-ladderPositions = [(1, 38), (4, 14), (8, 30), (21, 42), (28, 76), (50, 67), (71, 92), (86, 99)]
-gatewayPositions = snakePositions + ladderPositions
-
-# QoL variables
-numberOfSnakes = len(snakePositions)
-numberOfLadders = len(ladderPositions)
-
-
-done = False
-
-clock = pygame.time.Clock()
-
 GameLogic.startGame()
-
-#GameLogic.getData()
-
-### This is the Game Loop:
-while not done:
-    pygame.event.get()
-    #screen.fill(WHITE)  
-    
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
-
-
-
-    for i in range(len(playerGroup)): # Should be i in playerGroup - current state for testing purposes.
-        print("Player {}'s turn! Press ENTER to roll the dice! ".format(str(i + 1), end = ""))
-        input()
-        playerGroup[i].move()
-
-
-    #pygame.display.flip()
-
-    #The clock ticks over:
-    clock.tick(60)
-
-
-
-pygame.quit()
