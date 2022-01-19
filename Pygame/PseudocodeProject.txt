@@ -1,0 +1,118 @@
+Class Level():
+    // levelData is an array of strings, governing the location of elements:
+    public constructor(levelData):
+        // How much the level will shift each frame:
+        private xShift = 0
+        private yShift = 0
+
+        // How close to the edge the player needs to be for the map to shift:
+        private xShiftStart = 100
+        private yShiftStart = 100
+
+        // Objects:
+        private player
+
+        private platforms[]
+
+        private enemies1[]
+    
+        private enemies2[]
+
+        private boss1
+        private boss2
+
+        private NPC1
+        private NPC2
+        private NPC3
+
+        private checkPoints[]
+        private hearts[]
+
+        allSpritesGroup[]
+
+        setUpLevel(levelData)
+
+    public setUpLevel(levelData): 
+        for i in levelData:
+            for j in i:
+
+                // Creating appropriate object depending on data:
+                switch j:
+
+                    case "P":
+                        create player
+                        add player to allSpritesGroup[]
+                        break
+
+                    case "X": 
+                        create platform 
+                        add platform to platforms[]  
+                        add platform to allSpritesGroup[]
+                        break
+
+                    case "1":
+                        create enemy1
+                        add enemy1 to enemies1[]
+                        add enemy1 to allSpritesGroup[]
+                        break
+
+                    case "2":
+                        create enemy2
+                        add enemy2 to enemies2[]
+                        add enemy2 to allSpritesGroup[]
+                        add 
+
+                    case "3":
+                        create boss1
+                        add boss1 to allSpritesGroup[]
+                        break
+
+                    case "4":
+                        create boss2
+                        add boss2 to allSpritesGroup[]
+                        break
+
+                    case "5":
+                        create NPC1
+                        add NPC1 to allSpritesGroup[]
+                        break  
+
+                    case "6":
+                        create NPC2
+                        add NPC2 to allSpritesGroup[]
+                        break
+
+                    case "7":
+                        create NPC3
+                        add NPC3 to allSpritesGroup[]
+                        break  
+
+                    case "H":
+                        create heart
+                        add heart to hearts[]
+                        add heart to allSpritesGroup[]
+                        break
+
+                    case "C"
+                        create checkPoint
+                        add checkPoint to checkPoints
+                        add checkPoint to allSpritesGroup[]   
+
+                    default:
+                        break
+
+    public calculateShift()  
+        pos = player.getPos()
+        xSpeed = player.getXSpeed()
+
+        if (pos[0] < 100) or (pos[0] > screenWidth - 100):
+            player.setXSpeed(0)       
+            xShift = speed             
+       
+        else:
+            player.setXSpeed(xSpeed)
+
+
+
+
+    end setUpLevel

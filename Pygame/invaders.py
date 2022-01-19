@@ -283,5 +283,5 @@ done = False
 
 ### This is the Game Loop:
 while GameLogic.myPlayer.quit == False: 
-    GameLogic.update()
+    GameLogic.update(GameLogic)
 pygame.quit()
