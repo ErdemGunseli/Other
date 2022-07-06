@@ -10,7 +10,6 @@ from Strings import *
 
 class Game:
 
-    random.randint()
     def __init__(self):
         self.done = False
         self.page = 0
