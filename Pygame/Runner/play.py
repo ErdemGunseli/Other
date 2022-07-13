@@ -5,7 +5,7 @@ pygame.init()
 done = False
 clock = pygame.time.Clock()
 resolution = [1280, 720]
-frame_rate = 60
+frame_rate = 999
 frame_time = 1 / frame_rate
 
 screen = pygame.display.set_mode(resolution)
@@ -33,6 +33,8 @@ player_rect = player_surface.get_rect(topleft=(0, resolution[1] * 0.8 - 50))
 
 
 def update():
+
+    print(clock.get_fps())
 
    # Snail:
     snail_rect.x -= 100 * frame_time
