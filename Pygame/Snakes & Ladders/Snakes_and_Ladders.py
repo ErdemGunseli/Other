@@ -15,30 +15,30 @@ ladderPositions = [(1, 38), (4, 14), (8, 30), (21, 42), (28, 76), (50, 67), (71,
 numberOfSnakes = len(snakePositions)
 numberOfLadders = len(ladderPositions)
 
-class GameLogic():
+class GameLogic:
 
-    def generatePlayers(): # Generates Players
+    def generatePlayers(self): # Generates Players
         numberOfPlayers = int(input("\nHow many players will there be?    "))
         for player in range(numberOfPlayers):
             myPlayer = Player(0)
             playerGroup.append(myPlayer)
 
-    def generateSnakes(): # Generates Snakes
+    def generateSnakes(self): # Generates Snakes
         for snake in range(numberOfSnakes):
             mySnake = Snake(snakePositions[snake][0], snakePositions[snake][1])
             snakeGroup.append(mySnake)
 
-    def generateLadders():# Generates Ladders
+    def generateLadders(self):# Generates Ladders
         for ladder in range(numberOfLadders):
             myLadder = Ladder(ladderPositions[ladder][0], ladderPositions[ladder][1])
             ladderGroup.append(myLadder)
     
-    def generateDice(): # Generates Dice
+    def generateDice(self): # Generates Dice
         numberOfFaces = input("\nHow many faces should the dice have?     ")
         myDice = Dice(numberOfFaces)
         diceGroup.append(myDice)
 
-    def startGame():# Generates Everything
+    def startGame(self):# Generates Everything
         print("\nWelcome to Snakes & Ladders!\n")
         GameLogic.generateSnakes()
         GameLogic.generateLadders()
@@ -46,7 +46,7 @@ class GameLogic():
         GameLogic.generatePlayers()
         GameLogic.playGame()
     
-    def playGame(): # Goes through each player and moves them. 
+    def playGame(self): # Goes through each player and moves them.
         done = False
         while not done:
             for playerNumber in range(len(playerGroup)):
@@ -59,7 +59,7 @@ class GameLogic():
                         print("Player {} has reached 100 and won the game! Congratulations!".format(playerNumber + 1))
 
 
-class Gateway(): # The parent class of snakes and ladders.
+class Gateway: # The parent class of snakes and ladders.
 
     def __init__(self, enterPos, exitPos): # Paramenters are the enter and exit positions, taken from a list.
         self.enterPos = enterPos
