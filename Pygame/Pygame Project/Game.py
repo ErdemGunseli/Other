@@ -1,12 +1,8 @@
 import os
 import sqlite3
-
-# TODO: TESTING
-
 import pygame
 from pygame import mixer
 import math
-
 from Assets import *
 from Colours import *
 from Strings_English import *
@@ -22,6 +18,11 @@ from Strings_English import *
 # TODO: THE VIEW ELEMENTS SHOULD MOVE IF THEIR PARENT IS MOVED OR CHANGES IN SIZE, ATTRIBUTES FOR WHETHER THIS HAPPENS
 
 # TODO: DEBUG FILE
+
+# TODO: In order to make aspect ratio configurable - never place using pure metre coordinates, always centre between
+#  some values?
+
+# TODO: GUI Scale setting!!! up to 4x window dimensions work
 
 
 class Game:
@@ -127,10 +128,6 @@ class Game:
     def get_frame_time(self):
         return self.frame_time
 
-    def set_frame_time(self, frame_time):
-        self.frame_time = frame_time
-        self.frame_rate = 1 / frame_time
-
     def get_show_frame_rate(self):
         return self.show_frame_rate
 
@@ -155,7 +152,7 @@ class Game:
 
     def metre_to_pixel_point(self, values):
         return int(values[0] * (self.resolution[0] / self.window_dimensions[0])), \
-               int(values[1] * (self.resolution[1] / self.window_dimensions[1]))
+               int(values[1] * (self.resolution[0] / self.window_dimensions[0]))
 
     def pixel_to_metre(self, value):
         return value / (self.resolution[0] / self.window_dimensions[0])
@@ -182,7 +179,6 @@ class Game:
             if key_input == key_id: return True
         return False
 
-    # TODO: SAME LOOP BEING ENTERED FOR MANY THINGS, MAKE THESE ATTRIBUTES INSTEAD? JUST SEARCH FOR pygame.MOUSEBUTTONDOWN in self.all_events BUT DO IT LATER!!!! BUT IS THIS JUST AS INEFFICIENT
     def mouse_pressed(self):
         for event in self.all_events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -465,6 +461,10 @@ class Game:
         sl_2 = Slider(to_left_of=txt_slider_value, margin=1)
         view_group.append(sl_2)
 
+        sel_text = Selector(("A", "BBBBBBB"), below=btn_1)
+        view_group.append(sel_text)
+
+
         while not self.done:
             self.get_inputs()
             if self.key_pressed(pygame.K_ESCAPE): return
@@ -484,9 +484,6 @@ class SettingsPage:
         # Declaring required View objects and page layout:
 
         self.views = []
-
-        # Show Frame Rate Selector:
-        print(GAME.get_show_frame_rate())
 
         if GAME.get_show_frame_rate():
             start_index = 1
@@ -659,6 +656,7 @@ class View(pygame.sprite.Sprite):
     def get_rect(self):
         return self.rect
 
+
     def set_size(self, size):
         self.size = [item + self.padding for item in size]
 
@@ -670,7 +668,7 @@ class Text(View):
     NEVER = 0
     ALWAYS = 1
 
-    def __init__(self, text_string, size=None,
+    def __init__(self, text_string,
                  location=(0, 0), above=None, below=None, to_right_of=None, to_left_of=None,
                  margin=0.25, padding=0.5,
                  frame_condition=0, frame_thickness=0.05, corner_radius=0.1,
@@ -709,11 +707,11 @@ class Text(View):
     def set_text_string(self, text_string):
         self.text_string = text_string
         self.text = self.font.render(str(self.text_string), True, self.text_colour)
-        self.set_size(GAME.pixel_to_metre_point(self.text.get_size()))
         self.calculate_frame()
 
     def calculate_frame(self):
         self.rect = self.text.get_rect(center=(GAME.metre_to_pixel_point(self.location)))
+        self.set_size(GAME.pixel_to_metre_point(self.text.get_size()))
         # Tentative location value [0,0], corrected afterwards:
         self.frame = pygame.Rect([0, 0], GAME.metre_to_pixel_point(self.size))
         self.frame.center = GAME.metre_to_pixel_point(self.location)
@@ -854,7 +852,7 @@ class Selector(Button):
     def draw(self):
         # Need to get state to see if a change in state is needed:
         self.set_text_string(self.get_state())
-        self.calculate_frame()
+        # self.calculate_frame()
         super().draw()
 
     def get_state(self):
@@ -862,7 +860,7 @@ class Selector(Button):
         # because the selector would not have been drawn, we would get what value it was before the click,
         # not after the click.
 
-        if super().clicked():
+        if self.clicked():
 
             if not self.incremented:
 
@@ -993,8 +991,7 @@ class EditText(Button):
 
     def unfocused(self):
         # Now unfocused if mouse clicked anywhere else, or if it was focused and return has been clicked:
-        return (not self.frame.collidepoint(pygame.mouse.get_pos()) and GAME.mouse_released()) \
-               or (self.focused and pygame.K_RETURN in GAME.get_key_down_events())
+        return self.focused and (not self.frame.collidepoint(pygame.mouse.get_pos()) and GAME.mouse_released())
 
     def input_type_allowed(self, key):
 
