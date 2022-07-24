@@ -26,7 +26,8 @@ class Player(pygame.sprite.Sprite):
         self.inventory = inventory
 
         self.image = pygame.image.load(PLAYER_IMAGE).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (TILE_SIZE, TILE_SIZE))
+        tile_size = level.get_tile_size()
+        self.image = pygame.transform.scale(self.image, (tile_size, tile_size))
         self.rect = self.image.get_rect(center=position)
 
         # Pygame provides vectors in 2D and 3D, and allows operations to be made using them:
@@ -40,7 +41,7 @@ class Player(pygame.sprite.Sprite):
         self.attack_start_time = 0
 
         # The collider will allow for the desired overlap effect:
-        self.collider = self.rect # .inflate(0, game.unit_to_pixel(0.001))
+        self.collider = self.rect  # .inflate(0, game.unit_to_pixel(0.001))
 
     def get_rect(self):
         return self.rect
@@ -93,10 +94,11 @@ class Player(pygame.sprite.Sprite):
         # In this implementation, the player is moved as usual, and if there is a collision, the player is moved to the
         # appropriate side of the obstacle, which is determined using the player's direction of motion:
 
-        # TODO: FOR VERY HIGH FRAME RATES, THE NUMBER OF PIXELS THE PLAYER SHOULD MOVE COULD BE LESS THAN 1 PER FRAME.
-        # TODO: FOR THIS REASON, STORING THE DISTANCE THAT THE PLAYER SHOULD HAVE TRAVELLED AND MOVING THAT DISTANCE WHEN IT REACHES 1.
+        # For high frame rates, the number of pixels the player moves per frame could be less than 1 pixel per frame.
+        # For this reason, storing the distance that the player should have travelled, and moving the player by that
+        # distance when it reaches 1:
 
-        speed_per_frame = speed * TILE_SIZE * self.game.get_frame_time()
+        speed_per_frame = speed * self.level.get_tile_size() * self.game.get_current_frame_time()
 
         # How much the player needs to move this frame,
         # taking into account how much it couldn't move in the previous frames:
@@ -121,34 +123,35 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.collider.center
 
     def handle_collision(self, axis):
-
         # Retrieving the collision objects:
         obstacle_sprites = self.level.get_obstacle_sprites()
 
         # x-axis:
         if axis == 0:
             for obstacle in obstacle_sprites:
+                obstacle_collider = obstacle.get_collider()
                 # Checking if the obstacle has collided with the player:
-                if obstacle.collider.colliderect(self.collider):
+                if obstacle_collider.colliderect(self.collider):
                     # Using the player's direction to stop collision:
                     if self.direction.x > 0:
                         # The player is moving right, move the player to the left of the obstacle:
-                        self.collider.right = obstacle.collider.left
+                        self.collider.right = obstacle_collider.left
                     else:
                         # The player is moving left, move the player to the right of the obstacle:
-                        self.collider.left = obstacle.collider.right
+                        self.collider.left = obstacle_collider.right
         # y-axis:
         else:
             for obstacle in obstacle_sprites:
+                obstacle_collider = obstacle.get_collider()
                 # Checking if the obstacle has collided with the player:
-                if obstacle.collider.colliderect(self.collider):
+                if obstacle_collider.colliderect(self.collider):
                     # Using the player's direction to stop collision:
                     if self.direction.y > 0:
                         # The player is moving down, move the player above of the obstacle:
-                        self.collider.bottom = obstacle.collider.top
+                        self.collider.bottom = obstacle_collider.top
                     else:
                         # The player is moving up, move the player below the obstacle:
-                        self.collider.top = obstacle.collider.bottom
+                        self.collider.top = obstacle_collider.bottom
 
     def update(self):
         self.handle_input()

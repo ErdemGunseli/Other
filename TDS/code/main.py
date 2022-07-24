@@ -10,14 +10,7 @@ from user_interface import *
 from level import *
 from database_helper import DatabaseHelper
 
-
-# TODO: Read Documentation Please!!
-
-# TODO: Objects with raw coordinates should not pass [1, 1].
-#  Objects aligned with sides should not enter [1, 1]
-
 # TODO: Cascading and moving views when one moves/changes size
-
 # TODO: mixer.find_channel()
 
 class Game:
@@ -48,9 +41,6 @@ class Game:
 
             # Getting the frame rate cap setting from the database:
         self.frame_rate = int(self.database_helper.get_setting(DatabaseHelper.FRAME_RATE_LIMIT))
-
-        # Frame time is the reciprocal of the frame rate:
-        self.frame_time = 1 / self.frame_rate
 
         # Getting whether the frame rate should be displayed at the corner of the screen:
         self.show_frame_rate = self.database_helper.get_setting(DatabaseHelper.SHOW_FRAME_RATE)
@@ -87,7 +77,6 @@ class Game:
             fps_text.draw()
 
     def quit(self):
-        # TODO: Save Game
         self.done = True
 
     def get_current_level(self):
@@ -96,16 +85,18 @@ class Game:
     def get_database_helper(self):
         return self.database_helper
 
-    def get_frame_rate(self):
+    def get_current_frame_rate(self):
+        return self.clock.get_fps()
+
+    def get_current_frame_time(self):
+        return 1 / self.clock.get_fps()
+
+    def get_frame_rate_cap(self):
         return self.frame_rate
 
-    def set_frame_rate(self, frame_rate):
+    def set_frame_rate_cap(self, frame_rate):
         self.frame_rate = frame_rate
-        self.frame_time = 1 / frame_rate
         self.database_helper.update_setting(DatabaseHelper.FRAME_RATE_LIMIT, frame_rate)
-
-    def get_frame_time(self):
-        return self.frame_time
 
     def get_show_frame_rate(self):
         return self.show_frame_rate
@@ -120,6 +111,7 @@ class Game:
     def set_audio_volume(self, audio_volume):
         self.audio_volume = audio_volume
         self.database_helper.update_setting(DatabaseHelper.AUDIO_VOLUME, audio_volume)
+        mixer.music.set_volume(audio_volume)
 
     def get_key_down_events(self):
         return self.key_down_events
@@ -150,6 +142,9 @@ class Game:
             if event.type == pygame.MOUSEBUTTONUP:
                 return True
         return False
+
+    def get_rect(self):
+        return self.rect
 
     def unit_to_pixel(self, value):
         # Conversion between pixels and arbitrary units:
@@ -310,7 +305,6 @@ class Game:
 
         views.append(btn_exit)
 
-        # TODO: Dedicated play music function:
         mixer.music.load(MAIN_MENU_MUSIC)
         mixer.music.set_volume(self.audio_volume)
         mixer.music.play(-1)
@@ -323,7 +317,7 @@ class Game:
             # If the refresh rate has been changed and the input is not empty, set it to the attribute:
             if edt_txt_frame_rate.unfocused() and not edt_txt_frame_rate.input_empty():
                 frame_rate = int(edt_txt_frame_rate.get_text())
-                self.set_frame_rate(frame_rate)
+                self.set_frame_rate_cap(frame_rate)
 
             # Changing the frame rate display if the frame rate selector is clicked:
             if sel_show_frame_rate.clicked():
@@ -331,9 +325,7 @@ class Game:
 
             # If the audio volume slider has been changed:
             if sl_audio_volume.handle_released():
-                # TODO: Do this in function
                 self.set_audio_volume(sl_audio_volume.get_value()[0])
-                mixer.music.set_volume(sl_audio_volume.get_value()[0])
 
             # Exit if exit button or escape clicked:
             if btn_exit.clicked() or self.key_pressed(pygame.K_ESCAPE):
@@ -346,7 +338,6 @@ class Game:
             self.clock.tick(self.frame_rate)
 
     def testing(self):
-        # Testing TODO: REMOVE:
         print(self.database_helper.get_setting(DatabaseHelper.FRAME_RATE_LIMIT))
         print(self.database_helper.get_setting(DatabaseHelper.SHOW_FRAME_RATE))
         print(self.database_helper.get_setting(DatabaseHelper.AUDIO_VOLUME))
@@ -461,11 +452,11 @@ class Game:
 
         views.append(txt_test)
 
-        txt_test = Text(self,
-                        "Hippity Hoppity \nYour Screen Is My \nProperty",
-                        centre_between=(self.pixel_to_unit_point(self.rect.center),
-                                        self.pixel_to_unit_point(self.rect.midright)))
-
+        txt_test = TextLine(self,
+                            "",
+                            centre_between=(self.pixel_to_unit_point(self.rect.center),
+                                            self.pixel_to_unit_point(self.rect.midright)))
+        views.append(txt_test)
 
         btn_continue = Button(self,
                               text_string=CONTINUE,
@@ -488,11 +479,10 @@ class Game:
         while not self.done:
             self.screen.fill(WHITE)
 
-            # txt_test.set_text([round(item, 2) for item in sl_stats.get_value()])
+            if self.key_pressed(pygame.K_ESCAPE):
+                return
 
-
-
-
+            txt_test.set_text([round(item, 2) for item in sl_stats.get_value()])
 
             if btn_continue.clicked():
                 # TODO: SAVE PLAYER
@@ -508,13 +498,11 @@ class Game:
         views = []
 
         while not self.done:
-            self.screen.fill(WHITE)
+            self.screen.fill((145, 171, 23))
 
             if self.key_pressed(pygame.K_ESCAPE):
                 self.main_menu()
                 # TODO: SHOW PAUSE MENU
-
-
 
             self.current_level.update()
             self.update()

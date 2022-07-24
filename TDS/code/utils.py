@@ -3,10 +3,6 @@ from csv import reader
 from os import walk
 
 
-# TODO: SET TILE SIZE DYNAMICALLY SO THAT THERE IS A FIXED AMOUNT OF TILES FIT IN MAP
-TILE_SIZE = 64
-
-
 # Imports a layout file of which there are many per level:
 def import_csv_layout(path):
     terrain_map = []

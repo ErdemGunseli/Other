@@ -38,12 +38,12 @@ class DatabaseHelper:
         connection.execute("""CREATE TABLE IF NOT EXISTS LEVELS(
                             ID INTEGER PRIMARY KEY AUTOINCREMENT,
                             NAME TEXT NOT NULL,
-                            FOLDER_PATH TEXT NOT NULL 
+                            FOLDER_PATH TEXT NOT NULL
                             )""")
 
         # Inserting levels:
         cursor.executemany("INSERT INTO LEVELS VALUES(NULL, ?, ?)",
-                           [("Test Map", "level_maps/test_map.tmx")])
+                           [("Test Map", "../level_maps/test_map")])
 
         # Player Stats Table:
         cursor.execute("""CREATE TABLE PLAYER_STATS(
@@ -92,7 +92,7 @@ class DatabaseHelper:
         connection.commit()
         connection.close()
 
-    def get_level_path(self, level_id):
+    def get_map_path(self, level_id):
         connection = sqlite3.connect(self.database)
         cursor = connection.cursor()
 
@@ -109,6 +109,7 @@ class DatabaseHelper:
         connection.close()
 
         return path
+
 
     def get_player_stats(self):
         connection = sqlite3.connect(self.database)

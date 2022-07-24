@@ -1,24 +1,46 @@
 import pygame.display
-from pytmx.util_pygame import load_pygame
+from pytmx import *
 from utils import *
 from tile import Tile
 from player import Player
+from assets import *
 
 
 # TODO: Transparent blue rectangle to give night effect
 
 class Level:
-    BOUNDARY = 0
-    FOLIAGE = 1
-    LEVEL_OBJECT = 2
+    # File names:
+    MAP_FILE = "map.tmx"
 
-    def __init__(self, game, level_id):
+    # Layer Names:
+    GROUND = "ground"
+    RIVER = "river"
+    ROAD = "road"
+    PEBBLES = "pebbles"
+    PLANTS = "plants"
+    TREES = "trees"
+    ROCKS = "rocks"
+    BUILDINGS = "buildings"
+    BARRIERS = "barriers"
+
+    TILE_RESOLUTION = 256
+
+    def __init__(self, game, level_id, min_tile_count=20):
         self.player = None
         self.game = game
         self.database_helper = game.get_database_helper()
 
         self.display = pygame.display.get_surface()
-        self.display_center = (self.display.get_size()[0] // 2, self.display.get_size()[1] // 2)
+        display_size = self.display.get_size()
+
+        # Calculating the pixel size of each tile according to how many should fit on-screen:
+        if display_size[0] > display_size[1]:
+            self.tile_size = display_size[1] // min_tile_count
+        else:
+            self.tile_size = display_size[0] // min_tile_count
+        # self.tile_size = 10
+
+        self.display_center = (display_size[0] // 2, display_size[1] // 2)
 
         self.level_id = level_id
 
@@ -27,48 +49,35 @@ class Level:
 
         # Groups determining how the sprites should be categorised.
         # They are not mutually exclusive:
-        self.flat_sprites = pygame.sprite.Group()  # Sprites with no depth effect that should be drawn.
-        self.dynamic_sprites = pygame.sprite.Group()  # Sprites that should be updated.
-        self.visible_sprites = pygame.sprite.Group()  # Sprites that should be drawn.
-        self.obstacle_sprites = pygame.sprite.Group()  # Sprites that have collision.
+        self.all_sprites = pygame.sprite.Group()  # All the sprites in the level.
+        self.flat_sprites = pygame.sprite.Group()   # Sprites with no depth effect.
+        self.visible_sprites = pygame.sprite.Group()   # Sprites that should be drawn.
+        self.obstacle_sprites = pygame.sprite.Group()   # Sprites that have collision.
+        self.flat_sprites_in_frame = pygame.sprite.Group()   # Flat sprites that are on-screen.
+        self.visible_sprites_in_frame = pygame.sprite.Group()   # Visible sprites that are on-screen.
+        self.obstacle_sprites_in_frame = pygame.sprite.Group()   # Obstacle sprites that are on-screen.
 
         # Importing map path:
         level_id = int(level_id)
-        if level_id is None or \
-                level_id == 0:
+        if level_id is None or level_id == 0:
             level_id = 1
-        self.set_up_map(self.database_helper.get_level_path(level_id))
+        self.path = self.database_helper.get_map_path(level_id)
+
+        # Setting the scale factor for the correct conversion of the position of objects:
+        self.scale_factor = self.TILE_RESOLUTION / self.tile_size
 
 
-    def set_up_map(self, path):
-        # Loading layout file:
-        for layer in load_pygame(path).layers:
-            # If statements in outer for loop for improved efficiency at the cost of simplicity:
-            tiles = layer.tiles()
-            if layer.name == "ground":
-                for x, y, surface in tiles:
-                    tile = Tile((x * TILE_SIZE, y * TILE_SIZE), surface=surface)
-                    self.flat_sprites.add(tile)
+        self.tmx_data = load_pygame(self.path + "/" + self.MAP_FILE)
+        self.set_up_map()
 
-            elif layer.name == "mountains":
-                for x, y, surface in tiles:
-                    tile = Tile((x * TILE_SIZE, y * TILE_SIZE), surface=surface, collider_ratio=(1, 1))
-                    self.visible_sprites.add(tile)
-                    self.obstacle_sprites.add(tile)
-                    print(tile.collider.size)
 
-            else:
-                for x, y, surface in tiles:
-                    tile = Tile((x * TILE_SIZE, y * TILE_SIZE), surface=surface)
-                    self.visible_sprites.add(tile)
+    def set_up_map(self):
 
-                # TODO: GET PLAYER INVENTORY AND STATS
-                # TODO: UPDATE CURRENT LEVEL ID ? WILL IT NEED UPDATING?
-                # TODO: Run speed should be a number of tiles per second
-                # TODO: Set Player Position from special layer in map data, since currently, it depends on tile size
+        # TODO: GET PLAYER INVENTORY AND STATS
+        # TODO: UPDATE CURRENT LEVEL ID ? WILL IT NEED UPDATING? YES
+        # TODO: Run speed should be a number of tiles per second
 
         player_stats = self.database_helper.get_player_stats()
-
 
         self.player = Player(self, self.game, (1000, 1000), {Player.CURRENT_LEVEL_ID: self.level_id,
                                                              Player.MAX_HEALTH: 100,
@@ -80,46 +89,121 @@ class Level:
                                                              Player.DAYS_SURVIVED: 100,
                                                              Player.KILLS: 100}, {})
         self.visible_sprites.add(self.player)
-        self.dynamic_sprites.add(self.player)
+        self.all_sprites.add(self.player)
 
-    def calculate_object_size(self, image, small_side=1):
-        current_image_size = image.get_size()
-        image_width = current_image_size[0]
-        image_height = current_image_size[1]
+        # TODO: How can we store collider ratios and visibility in an elegant way to avoid this repetition?
+        self.set_up_layer(self.RIVER, visible=True, obstacle=False, flat=True)
+        self.set_up_layer(self.ROAD, visible=True, obstacle=False, flat=True)
+        self.set_up_layer(self.PEBBLES, collider_ratio=(0.2, 0.2), visible=True, obstacle=True, flat=False)
+        self.set_up_layer(self.PLANTS, visible=True, obstacle=False)
+        self.set_up_layer(self.TREES, collider_ratio=(0.4, 0.4), visible=True, obstacle=True)
+        self.set_up_layer(self.ROCKS, collider_ratio=(0.7, 0.7), visible=True, obstacle=True)
+        # Because buildings can have different shapes, their colliders are made of individual barriers:
+        self.set_up_layer(self.BUILDINGS, visible=True, obstacle=False)
+        self.set_up_layer(self.BARRIERS, collider_ratio=(1, 1), visible=True, obstacle=True)
 
-        # Setting the small side to the desired number of tiles
-        # whilst protecting the aspect ratio:
-        if image_width > image_height:
-            scale_factor = small_side / image_height
-            image_height = small_side
-            image_width *= scale_factor
-        else:
-            scale_factor = small_side / image_width
-            image_width = small_side
-            image_height *= scale_factor
+    def set_up_layer(self, layer_name, collider_ratio=(0.9, 0.9), visible=True, obstacle=True, flat=False):
 
-        return image_width, image_height
+        # Could not find a way to handle tile rotation or flipping - the pytmx docs say that this is
+        # automatically handled when getting the image, but not working for me :/
 
-    def draw_visible_sprites(self):
+        # Return if a given layer is not present in this map:
+        if layer_name not in [layer.name for layer in self.tmx_data.visible_layers]: return
+
+        layer = self.tmx_data.get_layer_by_name(layer_name)
+
+        # If object layer:
+        if isinstance(layer, TiledObjectGroup):
+            for map_object in layer:
+                if map_object.image is not None:
+                    # Adjusting for any rotation:
+                    image = pygame.transform.rotate(map_object.image, map_object.rotation)
+
+                    tile = Tile(self, (map_object.x / self.scale_factor, (map_object.y / self.scale_factor) + 1),
+                                size=(map_object.width / self.TILE_RESOLUTION, map_object.height / self.TILE_RESOLUTION),
+                                collider_ratio=collider_ratio, surface=image, protect_aspect_ratio=False)
+                    # Adding to correct groups:
+                    if visible:
+                        if flat:
+                            self.flat_sprites.add(tile)
+                        else:
+                            self.visible_sprites.add(tile)
+                    if obstacle:
+                        self.obstacle_sprites.add(tile)
+                    self.all_sprites.add(tile)
+
+        # If tile layer:
+        elif isinstance(layer, TiledTileLayer):
+            for x, y, surface in layer.tiles():
+                if surface is not None:
+                    tile = Tile(self, (x * self.tile_size, y * self.tile_size), collider_ratio=collider_ratio,
+                                surface=surface, protect_aspect_ratio=True)
+                    # Adding to correct groups:
+                    if visible:
+                        if flat:
+                            self.flat_sprites.add(tile)
+                        else:
+                            self.visible_sprites.add(tile)
+                    if obstacle: self.obstacle_sprites.add(tile)
+                    self.all_sprites.add(tile)
+
+
+    def draw_map(self):
         # Calculating how far the player is from the centre of the screen,
         # and determining correct offset such that the player is back at the centre:
         self.draw_offset.x = self.display_center[0] - self.player.get_rect().centerx
         self.draw_offset.y = self.display_center[1] - self.player.get_rect().centery
 
-        # Drawing sprites without depth effect first:
+        # Checking which sprites are on-screen, as we only need to be concerned with those:
+        self.update_sprites_in_frame()
+
+        # First drawing sprites without depth effect:
+        for sprite in self.flat_sprites_in_frame:
+            offset_position = sprite.rect.topleft + self.draw_offset
+            self.display.blit(sprite.image, offset_position)
+
+        # Sorting sprites with depth effect in ascending order of y-position:
+        for sprite in sorted(self.visible_sprites_in_frame, key=lambda sprite_in_list: sprite_in_list.rect.centery):
+            offset_position = sprite.rect.topleft + self.draw_offset
+            self.display.blit(sprite.image, offset_position)
+
+    def update_sprites_in_frame(self):
+        self.visible_sprites_in_frame = pygame.sprite.Group()
+        self.obstacle_sprites_in_frame = pygame.sprite.Group()
+        self.flat_sprites_in_frame = pygame.sprite.Group()
+
+        # Calculating the rect of the screen such that we can work out if objects are on screen:
+        screen_rect = self.game.get_rect().copy()
+        screen_rect.center = self.player.get_rect().center
+
+        for sprite in self.visible_sprites:
+            if pygame.Rect.colliderect(sprite.rect, screen_rect):
+                self.visible_sprites_in_frame.add(sprite)
+
+        for sprite in self.obstacle_sprites:
+            if pygame.Rect.colliderect(sprite.rect, screen_rect):
+                self.obstacle_sprites_in_frame.add(sprite)
+
         for sprite in self.flat_sprites:
-            offset_position = sprite.rect.topleft + self.draw_offset
-            self.display.blit(sprite.image, offset_position)
-
-        # Sorting sprites in ascending order of y-position:
-        for sprite in sorted(self.visible_sprites, key=lambda sprite_in_list: sprite_in_list.rect.midbottom[1]):
-            offset_position = sprite.rect.topleft + self.draw_offset
-            self.display.blit(sprite.image, offset_position)
-
+            if pygame.Rect.colliderect(sprite.rect, screen_rect):
+                self.flat_sprites_in_frame.add(sprite)
 
     def get_obstacle_sprites(self):
         return self.obstacle_sprites
 
+    def get_tile_size(self):
+        return self.tile_size
+
+    def get_tmx_data(self):
+        return self.tmx_data
+
+    def get_tile_size(self):
+        return self.tile_size
+
+    def get_scale_factor(self):
+        return self.scale_factor
+
     def update(self):
-        self.dynamic_sprites.update()
-        self.draw_visible_sprites()
+        self.visible_sprites.update()
+        self.draw_map()
+
