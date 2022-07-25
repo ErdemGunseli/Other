@@ -3,6 +3,8 @@ from pytmx import *
 from utils import *
 from tile import Tile
 from player import Player
+from colours import *
+import math
 from assets import *
 
 
@@ -22,10 +24,13 @@ class Level:
     ROCKS = "rocks"
     BUILDINGS = "buildings"
     BARRIERS = "barriers"
+    COLLIDERS = "colliders"
 
+    # Other constants:
     TILE_RESOLUTION = 256
+    NIGHT_COLOUR = (0, 71, 171)
 
-    def __init__(self, game, level_id, min_tile_count=20):
+    def __init__(self, game, level_id, min_tile_count=15, day_duration=60000):
         self.player = None
         self.game = game
         self.database_helper = game.get_database_helper()
@@ -42,7 +47,11 @@ class Level:
 
         self.display_center = (display_size[0] // 2, display_size[1] // 2)
 
-        self.level_id = level_id
+        # Validating level ID:
+        if level_id <= 0 or level_id is None:
+            self.level_id = 1
+        else:
+            self.level_id = level_id
 
         # Draw offset amount such that the player is always centred:
         self.draw_offset = pygame.math.Vector2()
@@ -66,6 +75,9 @@ class Level:
         # Setting the scale factor for the correct conversion of the position of objects:
         self.scale_factor = self.TILE_RESOLUTION / self.tile_size
 
+
+        # Getting background colour:
+        self.background_colour = self.database_helper.get_background_colour(self.level_id)
 
         self.tmx_data = load_pygame(self.path + "/" + self.MAP_FILE)
         self.set_up_map()
@@ -91,16 +103,17 @@ class Level:
         self.visible_sprites.add(self.player)
         self.all_sprites.add(self.player)
 
-        # TODO: How can we store collider ratios and visibility in an elegant way to avoid this repetition?
+        # Setting up layers:
         self.set_up_layer(self.RIVER, visible=True, obstacle=False, flat=True)
         self.set_up_layer(self.ROAD, visible=True, obstacle=False, flat=True)
-        self.set_up_layer(self.PEBBLES, collider_ratio=(0.2, 0.2), visible=True, obstacle=True, flat=False)
+        self.set_up_layer(self.PEBBLES, collider_ratio=(0.5, 0.5), visible=True, obstacle=True, flat=False)
         self.set_up_layer(self.PLANTS, visible=True, obstacle=False)
-        self.set_up_layer(self.TREES, collider_ratio=(0.4, 0.4), visible=True, obstacle=True)
+        self.set_up_layer(self.TREES, collider_ratio=(0.6, 0.4), visible=True, obstacle=True)
         self.set_up_layer(self.ROCKS, collider_ratio=(0.7, 0.7), visible=True, obstacle=True)
         # Because buildings can have different shapes, their colliders are made of individual barriers:
         self.set_up_layer(self.BUILDINGS, visible=True, obstacle=False)
         self.set_up_layer(self.BARRIERS, collider_ratio=(1, 1), visible=True, obstacle=True)
+        self.set_up_layer(self.COLLIDERS, collider_ratio=(1, 1), visible=True, obstacle=True)
 
     def set_up_layer(self, layer_name, collider_ratio=(0.9, 0.9), visible=True, obstacle=True, flat=False):
 
@@ -118,8 +131,8 @@ class Level:
                 if map_object.image is not None:
                     # Adjusting for any rotation:
                     image = pygame.transform.rotate(map_object.image, map_object.rotation)
-
                     tile = Tile(self, (map_object.x / self.scale_factor, (map_object.y / self.scale_factor) + 1),
+                                layer_name,
                                 size=(map_object.width / self.TILE_RESOLUTION, map_object.height / self.TILE_RESOLUTION),
                                 collider_ratio=collider_ratio, surface=image, protect_aspect_ratio=False)
                     # Adding to correct groups:
@@ -136,7 +149,7 @@ class Level:
         elif isinstance(layer, TiledTileLayer):
             for x, y, surface in layer.tiles():
                 if surface is not None:
-                    tile = Tile(self, (x * self.tile_size, y * self.tile_size), collider_ratio=collider_ratio,
+                    tile = Tile(self, (x * self.tile_size, y * self.tile_size), layer_name, collider_ratio=collider_ratio,
                                 surface=surface, protect_aspect_ratio=True)
                     # Adding to correct groups:
                     if visible:
@@ -159,13 +172,11 @@ class Level:
 
         # First drawing sprites without depth effect:
         for sprite in self.flat_sprites_in_frame:
-            offset_position = sprite.rect.topleft + self.draw_offset
-            self.display.blit(sprite.image, offset_position)
+            sprite.draw(self.draw_offset)
 
         # Sorting sprites with depth effect in ascending order of y-position:
         for sprite in sorted(self.visible_sprites_in_frame, key=lambda sprite_in_list: sprite_in_list.rect.centery):
-            offset_position = sprite.rect.topleft + self.draw_offset
-            self.display.blit(sprite.image, offset_position)
+            sprite.draw(self.draw_offset)
 
     def update_sprites_in_frame(self):
         self.visible_sprites_in_frame = pygame.sprite.Group()
@@ -187,6 +198,20 @@ class Level:
         for sprite in self.flat_sprites:
             if pygame.Rect.colliderect(sprite.rect, screen_rect):
                 self.flat_sprites_in_frame.add(sprite)
+
+    def calculate_filter_alpha(self):
+        current_time = pygame.time.get_ticks()
+        current_day_time = current_time % self.day_duration
+
+        result = self.night_filter_max_alpha * math.sin((current_day_time / self.day_duration) * math.pi)
+        print(result)
+        return int(result)
+
+    def get_current_background_colour(self):
+        return self.background_colour
+
+    def get_id(self):
+        return self.level_id
 
     def get_obstacle_sprites(self):
         return self.obstacle_sprites

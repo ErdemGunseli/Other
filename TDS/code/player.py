@@ -153,6 +153,9 @@ class Player(pygame.sprite.Sprite):
                         # The player is moving up, move the player below the obstacle:
                         self.collider.top = obstacle_collider.bottom
 
+    def draw(self, draw_offset):
+        pygame.display.get_surface().blit(self.image, self.rect.topleft + draw_offset)
+
     def update(self):
         self.handle_input()
         self.update_cooldown_timers()

@@ -494,18 +494,21 @@ class Game:
             self.clock.tick(self.frame_rate)
 
     def show_game(self):
-
+        background_colour = self.current_level.get_current_background_colour()
         views = []
 
+
         while not self.done:
-            self.screen.fill((145, 171, 23))
+            self.screen.fill(background_colour)
 
             if self.key_pressed(pygame.K_ESCAPE):
                 self.main_menu()
                 # TODO: SHOW PAUSE MENU
 
+
             self.current_level.update()
             self.update()
+            for view in views: view.draw()
             pygame.display.flip()
             self.clock.tick(self.frame_rate)
 

@@ -4,24 +4,13 @@ from abc import ABC, abstractmethod
 import pygame
 
 
-# TODO: Scroll bar that applies an offset to the draw amount
-# TODO: Visibility Attribute???
-# TODO: TRY ALL ATTRIBUTES
 
-# TODO: Need to write the same default values every time!
+# TODO: Pass constructor values in the abstract unit. They should immediately be converted to pixels and worked in that way.
+#  Margin, padding and font size to be passed in abstract units and immediately converted to pixels as well!
 
-# TODO: COMPLETELY REMOVE UNIT, HAVE TEXT SIZE IN PX, HAVE GUI SCALE SETTING IN SETTINGS, MARGIN,
-#  PADDING AS A PERCENTAGE OF THE SIZE OF THE OBJECT, ONLY PLACE OBJECT BETWEEN SCREEN POINTS???
-#  PROBABLY NOT WORTH TIME INVESTMENT, ALSO SLIDER AND IMAGE SIZE, DEFAULT GUI SCALE OPTION
+# TODO: The unit rectangle is not centred!!!! - This is not that important, since location is to be passed in pixels.
 
-#TODO: HAVE ONLY 1 RECT
-
-# TODO: Centre Between And Place methods should work after instantiation
-
-# TODO: Do not use rect when drawing - try to use location instead or update rect whenever location is updated!!!!
-
-# TODO: REMOVE ABSTRACT UNIT, MARGIN, PADDING SHOULD BE A PERCENTAGE OF THE SIZE OF THE OBJECT?
-
+# TODO: Location not passed in constructor if not relation. We can just set its rect.topleft etc. to another rect value ! YES!
 
 # An abstract class which all the UI elements inherit from:
 class View(ABC, pygame.sprite.Sprite):

@@ -38,12 +38,15 @@ class DatabaseHelper:
         connection.execute("""CREATE TABLE IF NOT EXISTS LEVELS(
                             ID INTEGER PRIMARY KEY AUTOINCREMENT,
                             NAME TEXT NOT NULL,
-                            FOLDER_PATH TEXT NOT NULL
+                            FOLDER_PATH TEXT NOT NULL,
+                            R INTEGER NOT NULL,
+                            G INTEGER NOT NULL,
+                            B INTEGER NOT NULL
                             )""")
 
         # Inserting levels:
-        cursor.executemany("INSERT INTO LEVELS VALUES(NULL, ?, ?)",
-                           [("Test Map", "../level_maps/test_map")])
+        cursor.executemany("INSERT INTO LEVELS VALUES(NULL, ?, ?, ?, ?, ?)",
+                           [("Test Map", "../level_maps/test_map", 145, 171, 23)])
 
         # Player Stats Table:
         cursor.execute("""CREATE TABLE PLAYER_STATS(
@@ -109,6 +112,26 @@ class DatabaseHelper:
         connection.close()
 
         return path
+
+    def get_background_colour(self, level_id):
+        connection = sqlite3.connect(self.database)
+        cursor = connection.cursor()
+
+        # Retrieving desired level path:
+        cursor.execute("SELECT R, G, B FROM LEVELS WHERE ID=?", [level_id])
+
+        cursor_return = cursor.fetchone()
+
+        print(cursor_return)
+        if cursor_return is not None:
+            colour = cursor_return
+        else:
+            colour = (0, 0, 0)
+
+        connection.commit()
+        connection.close()
+
+        return colour
 
 
     def get_player_stats(self):
