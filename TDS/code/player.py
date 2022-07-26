@@ -124,7 +124,7 @@ class Player(pygame.sprite.Sprite):
 
     def handle_collision(self, axis):
         # Retrieving the collision objects:
-        obstacle_sprites = self.level.get_obstacle_sprites()
+        obstacle_sprites = self.level.get_obstacle_tiles()
 
         # x-axis:
         if axis == 0:
@@ -156,7 +156,14 @@ class Player(pygame.sprite.Sprite):
     def draw(self, draw_offset):
         pygame.display.get_surface().blit(self.image, self.rect.topleft + draw_offset)
 
+    def get_overlapping_tile(self):
+       pass
+
+    def get_collider(self):
+        return self.collider
+
     def update(self):
+        self.get_overlapping_tile()
         self.handle_input()
         self.update_cooldown_timers()
         self.move_player(self.stats[self.RUN_SPEED])

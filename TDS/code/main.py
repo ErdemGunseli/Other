@@ -10,6 +10,7 @@ from user_interface import *
 from level import *
 from database_helper import DatabaseHelper
 
+
 # TODO: Cascading and moving views when one moves/changes size
 # TODO: mixer.find_channel()
 
@@ -72,8 +73,8 @@ class Game:
         if self.show_frame_rate:
             fps_text = TextLine(self,
                                 str(int(self.clock.get_fps())),
-                                location=[0.04, 0.04],
                                 font_size=0.04)
+            fps_text.get_rect().topleft = self.rect.topleft
             fps_text.draw()
 
     def quit(self):
@@ -163,7 +164,7 @@ class Game:
 
     def get_font(self, size):
         # The size of the font in arbitrary units:
-        return pygame.font.SysFont(self.font, int(size * (self.resolution[0] / self.window_dimensions[0])))
+        return pygame.font.SysFont(self.font, size)
 
     def main_menu(self):
 
@@ -172,7 +173,7 @@ class Game:
         # Play Button:
         btn_play = Button(self,
                           text_string=PLAY_GAME,
-                          location=self.pixel_to_unit_point(self.rect.center))
+                          position=self.rect.center)
         views.append(btn_play)
 
         # Settings Button:
@@ -190,8 +191,8 @@ class Game:
         # Title Text
         txt_title = TextLine(self,
                              text_string=GAME_NAME,
-                             centre_between=(self.pixel_to_unit_point(self.rect.midtop),
-                                             self.pixel_to_unit_point(btn_play.get_rect().midtop)),
+                             centre_between=(self.rect.midtop,
+                                             btn_play.get_rect().midtop),
                              frame_condition=View.ALWAYS,
                              font_size=0.25)
         txt_title.set_italic(True)
@@ -233,7 +234,7 @@ class Game:
         sel_show_frame_rate = Selector(self,
                                        font_size=0.04,
                                        start_index=start_index,
-                                       location=self.pixel_to_unit_point(self.rect.center))
+                                       position=self.rect.center)
         views.append(sel_show_frame_rate)
 
         # Show Frame Rate Text:
@@ -291,8 +292,8 @@ class Game:
         # Settings Text:
         txt_settings = TextLine(self,
                                 SETTINGS,
-                                centre_between=(self.pixel_to_unit_point(self.rect.midtop),
-                                                self.pixel_to_unit_point(txt_resolution_value.get_rect().midtop)))
+                                centre_between=(self.rect.midtop,
+                                                txt_resolution_value.get_rect().midtop))
 
         views.append(txt_settings)
 
@@ -300,8 +301,8 @@ class Game:
         btn_exit = Button(self,
                           text_string=BACK,
                           font_size=0.04,
-                          centre_between=(self.pixel_to_unit_point(sel_show_frame_rate.get_rect().midbottom),
-                                          self.pixel_to_unit_point(self.rect.midbottom)))
+                          centre_between=(sel_show_frame_rate.get_rect().midbottom,
+                                          self.rect.midbottom))
 
         views.append(btn_exit)
 
@@ -338,68 +339,78 @@ class Game:
             self.clock.tick(self.frame_rate)
 
     def testing(self):
-        print(self.database_helper.get_setting(DatabaseHelper.FRAME_RATE_LIMIT))
-        print(self.database_helper.get_setting(DatabaseHelper.SHOW_FRAME_RATE))
-        print(self.database_helper.get_setting(DatabaseHelper.AUDIO_VOLUME))
-
         views = []
-        txt_1 = TextLine(self, "Testing",
-                         location=self.pixel_to_unit_point(self.rect.center),
-                         frame_condition=View.NEVER)
+        txt_1 = TextLine(self, "TESTING",
+                         position=self.rect.center,
+                         frame_condition=View.ALWAYS,
+                         margin=0)
         views.append(txt_1)
 
-        txt_2 = TextLine(self, "Hi There",
-                         below=txt_1,
+        btn_2 = Button(self, text_string="2",
+                       to_left_of=txt_1)
+        views.append(btn_2)
+
+        btn_1 = Button(self, text_string="1",
+                       to_left_of=btn_2)
+        views.append(btn_1)
+
+        sl_1 = Slider(self,
+                      bar_size=(0.1, 0.1),
+                      below=btn_1,
+                      slide_vertical=True,
+                      slide_horizontal=True)
+        views.append(sl_1)
+
+        btn_3 = Button(self,
+                       icon=pygame.image.load("../assets/images/stat_icons/speed.png"),
+                       padding=0.1)
+        btn_3.get_rect().midright = self.rect.midright
+        views.append(btn_3)
+
+        sl_2 = Slider(self,
+                      to_right_of=sl_1)
+        views.append(sl_2)
+
+        txt_2 = TextLine(self, "...",
+                         to_right_of=sl_2,
+                         font_size=0.04,
                          frame_condition=View.ALWAYS)
         views.append(txt_2)
 
-        img = pygame.image.load("C:/Users/eguns/GitHub/Main/Pygame/TDS/assets/images/item_icons/armour_torso.png")
-        btn_1 = Button(self, icon=img,
-                       below=txt_2)
-        views.append(btn_1)
+        txt_3 = TextLine(self, "...",
+                         to_right_of=txt_2,
+                         font_size=0.02,
+                         frame_condition=View.ALWAYS)
+        views.append(txt_3)
 
-        btn_2 = Button(self, text_string="HTHTH",
-                       to_right_of=btn_1,
-                       margin=0.1)
-        views.append(btn_2)
+        edt_txt_1 = TextInput(self,
+                              hint="Input Here",
+                              above=txt_1,
+                              clear_on_focus=True,
+                              max_length=15)
+        views.append(edt_txt_1)
 
-        sl_1 = Slider(self,
-                      bar_size=[0.1, 0.1],
-                      start_value=[0.5, 0.5],
-                      above=txt_1,
-                      slide_horizontal=True,
-                      slide_vertical=True,
-                      padding=0)
-        views.append(sl_1)
+        edt_txt_2 = TextInput(self,
+                              hint="Input Here",
+                              to_right_of=edt_txt_1,
+                              clear_on_focus=True,
+                              max_length=15)
+        views.append(edt_txt_2)
 
-        txt_s1_val = TextLine(self,
-                              "",
-                              to_left_of=sl_1,
-                              frame_condition=View.ALWAYS,
-                              font_size=0.05,
-                              margin=0.1)
-        views.append(txt_s1_val)
-
-        sl_2 = Slider(self, above=sl_1)
-        views.append(sl_2)
-
-        txt_s2_val = TextLine(self,
-                              "",
-                              to_left_of=sl_2,
-                              frame_condition=View.ALWAYS,
-                              font_size=0.05,
-                              margin=0.1)
-        views.append(txt_s2_val)
-
-        sel_test = Selector(self, to_right_of=txt_1)
-        views.append(sel_test)
 
         while not self.done:
             self.screen.fill(WHITE)
             if self.key_pressed(pygame.K_ESCAPE): return
 
-            txt_s1_val.set_text([round(item, 2) for item in sl_1.get_value()])
-            txt_s2_val.set_text(round(sl_2.get_value()[0], 2))
+            if btn_1.clicked():
+                txt_2.set_text("Will Item To Right Move?")
+            if btn_2.clicked():
+                txt_3.set_text("Testing UI Element Movement...")
+
+            if sl_1.handle_is_held():
+                txt_2.set_text(sl_1.get_value())
+            if sl_2.handle_is_held():
+                txt_3.set_text(sl_2.get_value())
 
             for view in views: view.draw()
             self.update()
@@ -413,8 +424,7 @@ class Game:
         sl_stats = Slider(self,
                           bar_size=[0.3, 0.3],
                           start_value=[0.5, 0.5],
-                          centre_between=(self.pixel_to_unit_point(self.rect.center),
-                                          self.pixel_to_unit_point(self.rect.midleft)),
+                          centre_between=(self.rect.center,self.rect.midleft),
                           slide_horizontal=True,
                           slide_vertical=True,
                           padding=0,
@@ -447,15 +457,12 @@ class Game:
 
         txt_test = TextLine(self,
                             "",
-                            centre_between=(self.pixel_to_unit_point(self.rect.center),
-                                            self.pixel_to_unit_point(self.rect.midright)))
-
+                            centre_between=(self.rect.center, self.rect.midright))
         views.append(txt_test)
 
         txt_test = TextLine(self,
                             "",
-                            centre_between=(self.pixel_to_unit_point(self.rect.center),
-                                            self.pixel_to_unit_point(self.rect.midright)))
+                            centre_between=(self.rect.center, self.rect.midright))
         views.append(txt_test)
 
         btn_continue = Button(self,
@@ -494,9 +501,8 @@ class Game:
             self.clock.tick(self.frame_rate)
 
     def show_game(self):
-        background_colour = self.current_level.get_current_background_colour()
+        background_colour = self.current_level.get_background_colour()
         views = []
-
 
         while not self.done:
             self.screen.fill(background_colour)
@@ -504,7 +510,6 @@ class Game:
             if self.key_pressed(pygame.K_ESCAPE):
                 self.main_menu()
                 # TODO: SHOW PAUSE MENU
-
 
             self.current_level.update()
             self.update()

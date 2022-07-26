@@ -10,12 +10,13 @@ class Tile(pygame.sprite.Sprite):
     # For example, because the player should pass through the leaves of a tree,
     # the collider of the tree should be less than the size of its image, which includes its leaves.
     # If a value in the collider ratio is 0, it will be 1 pixel.
-    def __init__(self, level, position, tile_type, size=(1, 1), collider_ratio=(0.9, 0.9), surface=None, protect_aspect_ratio=True):
+    def __init__(self, level, position, layer_name, size=(1, 1),
+                 collider_ratio=(0.9, 0.9), surface=None, protect_aspect_ratio=True):
 
         super().__init__()
 
         # The layer name of the tile, which can be used for damage, audio, etc.
-        self.type = tile_type
+        self.layer_name = layer_name
 
         tile_size = level.get_tile_size()
         if surface is None:
@@ -66,6 +67,9 @@ class Tile(pygame.sprite.Sprite):
 
     def get_collider(self):
         return self.collider
+
+    def get_layer_name(self):
+        return self.layer_name
 
 
 
