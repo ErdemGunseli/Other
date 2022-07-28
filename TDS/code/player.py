@@ -25,7 +25,6 @@ class Player(pygame.sprite.Sprite):
     MIN_ATTACK = 75
     MAX_ATTACK = 125
 
-
     def __init__(self, game, level, position, stats, inventory):
 
         self.game = game
@@ -95,7 +94,6 @@ class Player(pygame.sprite.Sprite):
             self.attacking = True
             self.attack_start_time = pygame.time.get_ticks()
             print("MAGIC")
-
 
     def update_cooldown_timers(self):
         # The timers for when an action requires a cooldown.
