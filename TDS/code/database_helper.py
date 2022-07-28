@@ -62,7 +62,7 @@ class DatabaseHelper:
                             (Player.MELEE_DAMAGE,),
                             (Player.MELEE_COOLDOWN_MULTIPLIER,),
                             (Player.MAGIC_DAMAGE,),
-                            (Player.MELEE_COOLDOWN_MULTIPLIER,),
+                            (Player.MAGIC_COOLDOWN_MULTIPLIER,),
                             (Player.KILLS,)])
 
 
