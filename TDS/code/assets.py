@@ -10,7 +10,7 @@ stat_icon_path = "../assets/images/stat_icons"
 HEALTH_ICON = stat_icon_path + "/" + "health.png"
 SPEED_ICON = stat_icon_path + "/" + "speed.png"
 MELEE_DAMAGE_ICON = stat_icon_path + "/" + "melee_damage.png"
-RANGED_DAMAGE_ICON = stat_icon_path + "/" + "ranged_damage.png"
+MAGIC_DAMAGE_ICON = stat_icon_path + "/" + "magic_damage.png"
 
 # ~!~ Audio ~!~ #
 

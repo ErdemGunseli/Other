@@ -3,20 +3,6 @@ from csv import reader
 from os import walk
 
 
-# Imports a layout file of which there are many per level:
-def import_csv_layout(path):
-    terrain_map = []
-
-    # Turning the CVS layout file into a list:
-    with open(path) as level_map:
-        layout = reader(level_map, delimiter=",")
-
-        for row in layout:
-            terrain_map.append(list(row))
-
-    # Returning a list of tile IDs:
-    return terrain_map
-
 # Using this function to import several files at once:
 def import_folder(path):
     # Pygame needs to be initiated for this function to work:
@@ -39,6 +25,3 @@ def import_folder(path):
             surface_list.append(image_surface)
 
     return surface_list
-
-
-

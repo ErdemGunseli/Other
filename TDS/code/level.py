@@ -30,7 +30,7 @@ class Level:
     TILE_RESOLUTION = 256
     NIGHT_COLOUR = (0, 71, 171)
 
-    def __init__(self, game, level_id, min_tile_count=15, day_duration=60000):
+    def __init__(self, game, level_id, min_tile_count=15):
         self.player = None
         self.game = game
         self.database_helper = game.get_database_helper()
@@ -61,8 +61,9 @@ class Level:
         self.all_tiles = pygame.sprite.Group()  # All the sprites in the level.
         self.flat_tiles = pygame.sprite.Group()   # Sprites with no depth effect.
         self.depth_tiles = pygame.sprite.Group()  # Sprites with depth effect.
+        self.dynamic_tiles = pygame.sprite.Group()  # Sprites that should be updated.
         self.obstacle_tiles = pygame.sprite.Group()   # Sprites that have collision.
-        self.depth_tiles_in_frame = pygame.sprite.Group() # Depth sprites that are on-screen.
+        self.depth_tiles_in_frame = pygame.sprite.Group()  # Depth sprites that are on-screen.
         self.flat_tiles_in_frame = pygame.sprite.Group()   # Flat sprites that are on-screen.
         self.obstacle_tiles_in_frame = pygame.sprite.Group()   # Obstacle sprites that are on-screen.
 
@@ -91,16 +92,19 @@ class Level:
 
         player_stats = self.database_helper.get_player_stats()
 
-        self.player = Player(self, self.game, (1000, 1000), {Player.CURRENT_LEVEL_ID: self.level_id,
-                                                             Player.MAX_HEALTH: 100,
+        self.player = Player(self.game, self, (1000, 1000), {Player.CURRENT_LEVEL_ID: self.level_id,
+                                                             Player.FULL_HEALTH: 100,
                                                              Player.CURRENT_HEALTH: 100,
                                                              # Run speed is tiles per second
                                                              Player.RUN_SPEED: 5,
-                                                             Player.MELEE_DAMAGE: 100,
-                                                             Player.RANGED_DAMAGE: 100,
-                                                             Player.DAYS_SURVIVED: 100,
+                                                             Player.MELEE_DAMAGE: 1000,
+                                                             Player.MELEE_COOLDOWN_MULTIPLIER: 1,
+                                                             Player.MAGIC_DAMAGE: 1000,
+                                                             Player.MAGIC_COOLDOWN_MULTIPLIER: 1,
                                                              Player.KILLS: 100}, {})
+
         self.depth_tiles.add(self.player)
+        self.dynamic_tiles.add(self.player)
         self.all_tiles.add(self.player)
 
         # Setting up layers:
@@ -112,8 +116,8 @@ class Level:
         self.set_up_layer(self.ROCKS, collider_ratio=(0.7, 0.7), visible=True, depth=True, obstacle=True)
         # Because buildings can have different shapes, their colliders are made of individual barriers:
         self.set_up_layer(self.BUILDINGS, visible=True, depth=True, obstacle=False)
-        self.set_up_layer(self.BARRIERS, collider_ratio=(1, 1), visible=True, obstacle=True)
-        self.set_up_layer(self.COLLIDERS, collider_ratio=(1, 1), visible=True, obstacle=True)
+        self.set_up_layer(self.BARRIERS, collider_ratio=(1, 1), visible=False, obstacle=True)
+        self.set_up_layer(self.COLLIDERS, collider_ratio=(1, 1), visible=False, obstacle=True)
 
     def set_up_layer(self, layer_name, collider_ratio=(0.9, 0.9), visible=True, depth=True, obstacle=True):
         # Could not find a way to handle tile rotation or flipping - the pytmx docs say that this is
@@ -129,6 +133,7 @@ class Level:
             for map_object in layer:
                 if map_object.image is not None:
                     # Adjusting for any rotation:
+                    #TODO: CHECK ROTATION
                     image = pygame.transform.rotate(map_object.image, map_object.rotation)
                     tile = Tile(self, (map_object.x / self.scale_factor, (map_object.y / self.scale_factor) + 1),
                                 layer_name,
@@ -148,8 +153,8 @@ class Level:
         elif isinstance(layer, TiledTileLayer):
             for x, y, surface in layer.tiles():
                 if surface is not None:
-                    tile = Tile(self, (x * self.tile_size, y * self.tile_size), layer_name, collider_ratio=collider_ratio,
-                                surface=surface, protect_aspect_ratio=True)
+                    tile = Tile(self, (x * self.tile_size, y * self.tile_size), layer_name,
+                                collider_ratio=collider_ratio, surface=surface, protect_aspect_ratio=True)
                     # Adding to correct groups:
                     if visible:
                         if depth:
@@ -205,8 +210,11 @@ class Level:
     def get_id(self):
         return self.level_id
 
-    def get_obstacle_tiles(self):
-        return self.obstacle_tiles
+    def get_player(self):
+        return self.player
+
+    def get_obstacle_tiles_in_frame(self):
+        return self.obstacle_tiles_in_frame
 
     def get_all_tiles(self):
         return self.all_tiles
@@ -224,6 +232,6 @@ class Level:
         return self.scale_factor
 
     def update(self):
-        self.all_tiles.update()
+        self.dynamic_tiles.update()
         self.draw_map()
 

@@ -56,13 +56,15 @@ class DatabaseHelper:
 
         cursor.executemany("INSERT INTO PLAYER_STATS VALUES(?, 0)",
                            [(Player.CURRENT_LEVEL_ID,),
-                            (Player.MAX_HEALTH,),
+                            (Player.FULL_HEALTH,),
                             (Player.CURRENT_HEALTH,),
                             (Player.RUN_SPEED,),
                             (Player.MELEE_DAMAGE,),
-                            (Player.RANGED_DAMAGE,),
-                            (Player.DAYS_SURVIVED,),
+                            (Player.MELEE_COOLDOWN_MULTIPLIER,),
+                            (Player.MAGIC_DAMAGE,),
+                            (Player.MELEE_COOLDOWN_MULTIPLIER,),
                             (Player.KILLS,)])
+
 
         connection.commit()
         connection.close()
@@ -122,7 +124,6 @@ class DatabaseHelper:
 
         cursor_return = cursor.fetchone()
 
-        print(cursor_return)
         if cursor_return is not None:
             colour = cursor_return
         else:

@@ -29,7 +29,9 @@ class Game:
         # Getting the current resolution of the physical screen:
         screen_info = pygame.display.Info()
         self.resolution = [screen_info.current_w, screen_info.current_h]
-        self.screen = pygame.display.set_mode(self.resolution, pygame.FULLSCREEN)
+        # TODO: REMOVE
+        self.resolution = (1280, 720)
+        self.screen = pygame.display.set_mode(self.resolution)  #, pygame.FULLSCREEN)
         self.rect = self.screen.get_rect()
         pygame.display.set_caption(GAME_NAME)
         self.clock = pygame.time.Clock()
@@ -206,14 +208,14 @@ class Game:
 
             # On Click:
             if btn_play.clicked():
-                if self.database_helper.get_player_stats()[Player.MAX_HEALTH] == 0:
+                if self.database_helper.get_player_stats()[Player.FULL_HEALTH] == 0:
                     self.character_menu()
 
                 self.show_game()
                 return
             elif btn_settings.clicked():
                 self.settings_menu()
-                pass
+
             elif btn_quit.clicked():
                 self.quit()
 
@@ -306,10 +308,6 @@ class Game:
 
         views.append(btn_exit)
 
-        mixer.music.load(MAIN_MENU_MUSIC)
-        mixer.music.set_volume(self.audio_volume)
-        mixer.music.play(-1)
-
         while not self.done:
             self.screen.fill(WHITE)
             if self.key_pressed(pygame.K_ESCAPE):
@@ -330,7 +328,6 @@ class Game:
 
             # Exit if exit button or escape clicked:
             if btn_exit.clicked() or self.key_pressed(pygame.K_ESCAPE):
-                mixer.music.fadeout(500)
                 return
 
             for view in views: view.draw()
@@ -418,11 +415,9 @@ class Game:
             self.clock.tick(self.frame_rate)
 
     def character_menu(self):
-
         views = []
 
-        sl_stats = Slider(self,
-                          bar_size=[0.3, 0.3],
+        sl_stats = Slider(self, bar_size=[0.3, 0.3],
                           start_value=[0.5, 0.5],
                           centre_between=(self.rect.center,self.rect.midleft),
                           slide_horizontal=True,
@@ -431,57 +426,60 @@ class Game:
                           margin=0)
         views.append(sl_stats)
 
-        img_health = Image(self,
-                           icon=pygame.image.load(HEALTH_ICON).convert_alpha(),
+        img_health = Image(self, icon=pygame.image.load(HEALTH_ICON).convert_alpha(),
                            above=sl_stats,
                            frame_condition=1)
         views.append(img_health)
 
-        img_speed = Image(self,
-                          icon=pygame.image.load(SPEED_ICON).convert_alpha(),
+        img_speed = Image(self, icon=pygame.image.load(SPEED_ICON).convert_alpha(),
                           below=sl_stats,
                           frame_condition=1)
         views.append(img_speed)
 
-        img_melee_damage = Image(self,
-                                 icon=pygame.image.load(MELEE_DAMAGE_ICON).convert_alpha(),
+        img_melee_damage = Image(self, icon=pygame.image.load(MELEE_DAMAGE_ICON).convert_alpha(),
                                  to_left_of=sl_stats,
                                  frame_condition=1)
         views.append(img_melee_damage)
 
-        img_ranged_damage = Image(self,
-                                  icon=pygame.image.load(RANGED_DAMAGE_ICON).convert_alpha(),
+        img_ranged_damage = Image(self, icon=pygame.image.load(MAGIC_DAMAGE_ICON).convert_alpha(),
                                   to_right_of=sl_stats,
                                   frame_condition=1)
         views.append(img_ranged_damage)
 
-        txt_test = TextLine(self,
-                            "",
-                            centre_between=(self.rect.center, self.rect.midright))
-        views.append(txt_test)
+        slider_values = sl_stats.get_value(decimal_places=1)
+        health = Player.MIN_HEALTH + (Player.MAX_HEALTH - Player.MIN_HEALTH) * slider_values[1]
+        movement = Player.MIN_SPEED + (Player.MAX_SPEED - Player.MIN_SPEED) * round(1 - slider_values[1], 1)
+        magic = Player.MIN_MAGIC + (Player.MAX_MAGIC - Player.MIN_MAGIC) * slider_values[0]
+        attack = Player.MIN_ATTACK + (Player.MAX_ATTACK - Player.MIN_ATTACK) * round(1 - slider_values[0], 1)
 
-        txt_test = TextLine(self,
-                            "",
-                            centre_between=(self.rect.center, self.rect.midright))
-        views.append(txt_test)
+        txt_stats = Text(self, CHARACTER_STATS.format(health, movement, attack, magic),
+                         centre_between=(self.rect.center, self.rect.midright),
+                         font_size=0.065)
+        views.append(txt_stats)
 
-        btn_continue = Button(self,
-                              text_string=CONTINUE,
-                              below=txt_test)
+        txt_warning = TextLine(self, ENTER_CHARACTER_NAME,
+                               visible=False,
+                               position=(0, 0),
+                               font_size=0.04,
+                               below=txt_stats,
+                               margin=0,
+                               frame_condition=View.ALWAYS,
+                               text_colour=RED,
+                               frame_colour=RED)
+        views.append(txt_warning)
 
+        btn_continue = Button(self, text_string=CONTINUE,
+                              below=txt_warning)
         views.append(btn_continue)
 
-        min_health = 75
-        max_health = 125
+        edt_txt_player_name = TextInput(self,
+                                        max_length=20,
+                                        hint=CHARACTER_NAME,
+                                        above=txt_stats)
+        views.append(edt_txt_player_name)
 
-        min_speed = 3
-        max_speed = 5
 
-        min_ranged = 75
-        max_ranged = 125
 
-        min_melee = 75
-        max_melee = 125
 
         while not self.done:
             self.screen.fill(WHITE)
@@ -489,11 +487,25 @@ class Game:
             if self.key_pressed(pygame.K_ESCAPE):
                 return
 
-            txt_test.set_text([round(item, 2) for item in sl_stats.get_value()])
+            if sl_stats.handle_held:
+                slider_values = sl_stats.get_value(decimal_places=1)
+                health = Player.MIN_HEALTH + (Player.MAX_HEALTH - Player.MIN_HEALTH) * slider_values[1]
+                movement = Player.MIN_SPEED + (Player.MAX_SPEED - Player.MIN_SPEED) * round(1 - slider_values[1], 1)
+                magic = Player.MIN_MAGIC + (Player.MAX_MAGIC - Player.MIN_MAGIC) * slider_values[0]
+                attack = Player.MIN_ATTACK + (Player.MAX_ATTACK - Player.MIN_ATTACK) * round(1 - slider_values[0], 1)
+                txt_stats.set_text(CHARACTER_STATS.format(health, movement, attack, magic))
 
             if btn_continue.clicked():
-                # TODO: SAVE PLAYER
-                return
+
+                if edt_txt_player_name.input_empty():
+                    txt_warning.set_visibility(True)
+                else:
+                    player = Player(self, self.current_level, (1000, 1000), {}, {})
+                    self.database_helper.update_player_stats(player)
+                    return
+
+            if txt_warning.clicked():
+                txt_warning.set_visibility(False)
 
             for view in views: view.draw()
             self.update()
@@ -516,6 +528,7 @@ class Game:
             for view in views: view.draw()
             pygame.display.flip()
             self.clock.tick(self.frame_rate)
+
 
 
 Game()

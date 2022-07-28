@@ -10,6 +10,7 @@ class Tile(pygame.sprite.Sprite):
     # For example, because the player should pass through the leaves of a tree,
     # the collider of the tree should be less than the size of its image, which includes its leaves.
     # If a value in the collider ratio is 0, it will be 1 pixel.
+    # TODO: TRANSPARENCY
     def __init__(self, level, position, layer_name, size=(1, 1),
                  collider_ratio=(0.9, 0.9), surface=None, protect_aspect_ratio=True):
 
@@ -63,7 +64,7 @@ class Tile(pygame.sprite.Sprite):
 
     def draw(self, draw_offset):
         pygame.display.get_surface().blit(self.image, self.rect.topleft + draw_offset)
-        pygame.display.get_surface().blit(self.collider_image, self.collider.topleft + draw_offset)
+        # pygame.display.get_surface().blit(self.collider_image, self.collider.topleft + draw_offset)
 
     def get_collider(self):
         return self.collider

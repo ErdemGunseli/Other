@@ -6,15 +6,27 @@ from utils import *
 class Player(pygame.sprite.Sprite):
     # Constants for player stat types:
     CURRENT_LEVEL_ID = 0
-    MAX_HEALTH = 1
+    FULL_HEALTH = 1
     CURRENT_HEALTH = 2
-    RUN_SPEED = 3
+    RUN_SPEED = 3  # Tiles per second
     MELEE_DAMAGE = 4
-    RANGED_DAMAGE = 5
-    DAYS_SURVIVED = 6
-    KILLS = 7
+    MELEE_COOLDOWN_MULTIPLIER = 5
+    MAGIC_DAMAGE = 6
+    MAGIC_COOLDOWN_MULTIPLIER = 7
+    KILLS = 8
 
-    def __init__(self, level, game, position, stats, inventory):
+    # Minimum and maximum values for starting player stats:
+    MIN_HEALTH = 75
+    MAX_HEALTH = 125
+    MIN_SPEED = 3
+    MAX_SPEED = 6
+    MIN_MAGIC = 75
+    MAX_MAGIC = 125
+    MIN_ATTACK = 75
+    MAX_ATTACK = 125
+
+
+    def __init__(self, game, level, position, stats, inventory):
 
         self.game = game
         self.level = level
@@ -26,7 +38,7 @@ class Player(pygame.sprite.Sprite):
         self.inventory = inventory
 
         self.image = pygame.image.load(PLAYER_IMAGE).convert_alpha()
-        tile_size = level.get_tile_size()
+        tile_size = self.level.get_tile_size()
         self.image = pygame.transform.scale(self.image, (tile_size, tile_size))
         self.rect = self.image.get_rect(center=position)
 
@@ -73,11 +85,16 @@ class Player(pygame.sprite.Sprite):
         if self.direction.magnitude() != 0:
             self.direction = self.direction.normalize()
 
-            # Attack input:
+        # Attack input:
         if keys_held[pygame.K_SPACE] and not self.attacking:
             self.attacking = True
             self.attack_start_time = pygame.time.get_ticks()
             print("ATTACK")
+
+        if keys_held[pygame.K_LSHIFT] and not self.attacking:
+            self.attacking = True
+            self.attack_start_time = pygame.time.get_ticks()
+            print("MAGIC")
 
 
     def update_cooldown_timers(self):
@@ -124,7 +141,7 @@ class Player(pygame.sprite.Sprite):
 
     def handle_collision(self, axis):
         # Retrieving the collision objects:
-        obstacle_sprites = self.level.get_obstacle_tiles()
+        obstacle_sprites = self.level.get_obstacle_tiles_in_frame()
 
         # x-axis:
         if axis == 0:
@@ -156,14 +173,10 @@ class Player(pygame.sprite.Sprite):
     def draw(self, draw_offset):
         pygame.display.get_surface().blit(self.image, self.rect.topleft + draw_offset)
 
-    def get_overlapping_tile(self):
-       pass
-
     def get_collider(self):
         return self.collider
 
     def update(self):
-        self.get_overlapping_tile()
         self.handle_input()
         self.update_cooldown_timers()
         self.move_player(self.stats[self.RUN_SPEED])

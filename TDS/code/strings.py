@@ -25,6 +25,9 @@ BACK = "Back"
 
 CONTINUE = "Continue"
 
+CHARACTER_STATS = "Maximum Health: {}%\nMovement Speed: {}\nAttack Damage: {}%\nMagic Damage: {}%"
+CHARACTER_NAME = "Character Name"
+ENTER_CHARACTER_NAME = "Please Enter a Character Name"
 ON = "On"
 OFF = "Off"
 
@@ -43,7 +46,7 @@ DESC_COINS = "Currency used to buy goods from vendors"
 
 
 # ~~ Stats ~~ #
-MAX_HEALTH = "Maximum Health"
+FULL_HEALTH = "Full Health"
 CURRENT_HEALTH = "Current Health"
 RUN_SPEED = "Running Speed"
 MELEE_COOLDOWN = "Melee Attack Cooldown"
