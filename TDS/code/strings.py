@@ -6,42 +6,46 @@ GAME_NAME = "GAME NAME"
 PLACEHOLDER = "_"
 RESOLUTION_FORMAT = "{} x {}"
 
-# ~~ UI ~~ #
+# ~!~ UI ~!~ #
+
+# ~~ Main ~~ #
 PLAY_GAME = "Play Game"
 MAIN_MENU = "Main Menu"
 SETTINGS = "Settings"
 QUIT = "Quit"
 
-PAUSED = "Paused"
-RETURN_TO_MENU = "Return to Menu"
-SHOW_HELP = "Show Help"
-RESUME_GAME = "Resume Game"
-
+# ~~ Settings ~~ #
 RESOLUTION = "Resolution"
 FRAME_RATE_LIMIT = "Frame Rate Limit"
 SHOW_FRAME_RATE = "Show Frame Rate"
 AUDIO_VOLUME = "Audio Volume"
+DELETE_SAVES = "Delete Save Data"
+CONFIRM = "Confirm"
 BACK = "Back"
 
+# ~~ Character Creation ~~ #
 CONTINUE = "Continue"
-
-CHARACTER_STATS = "Maximum Health: {}%\nMovement Speed: {}\nAttack Damage: {}%\nMagic Damage: {}%"
+CHARACTER_STATS = "Maximum Health: {}%\nMovement Speed: {}%\nAttack Damage: {}%\nMagic Damage: {}%"
 CHARACTER_NAME = "Character Name"
 ENTER_CHARACTER_NAME = "Please Enter a Character Name"
+
+# ~~ Misc ~~ #
 ON = "On"
 OFF = "Off"
+UP = "up"
+DOWN = "down"
+LEFT = "left"
+RIGHT = "right"
 
 
-INVENTORY = "Inventory"
-MAP = "Map"
+# ~!~ Items ~!~ #
 
-
-# ~~ Items ~~ #
-LIVES = "Lives"
-DESC_LIVES = "The amount of damage you can sustain"
-
-COINS = "Coin"
-DESC_COINS = "Currency used to buy goods from vendors"
+# ~~ Weapons ~~ #
+SWORD = "Sword"
+LANCE = "Lance"
+AXE = "Axe"
+RAPIER = "Rapier"
+SAI = "Sai"
 
 
 

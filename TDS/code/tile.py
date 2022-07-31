@@ -3,40 +3,61 @@ from utils import *
 from colours import *
 
 
+# TODO: Try centering image at the center of the collider?
+
 class Tile(pygame.sprite.Sprite):
 
     # The size attribute is the size of the tile relative to the default tile size.
     # The collider ratio is what ratio of the size of the object the collider should be.
     # For example, because the player should pass through the leaves of a tree,
     # the collider of the tree should be less than the size of its image, which includes its leaves.
-    # If a value in the collider ratio is 0, it will be 1 pixel.
-    # TODO: TRANSPARENCY
-    def __init__(self, level, position, layer_name, size=(1, 1),
-                 collider_ratio=(0.9, 0.9), surface=None, protect_aspect_ratio=True):
-
+    def __init__(self, game, position=(0, 0), size=(1, 1),
+                 collider_ratio=(0.9, 0.9), image=None, protect_aspect_ratio=True):
         super().__init__()
 
-        # The layer name of the tile, which can be used for damage, audio, etc.
-        self.layer_name = layer_name
+        self.game = game
+        self.level = game.get_current_level()
+        self.tile_size = self.level.get_tile_size()
 
-        tile_size = level.get_tile_size()
-        if surface is None:
-            surface = pygame.Surface((tile_size, tile_size))
-        self.image = surface
+        # Whether the aspect ratio of the image should be respected when resizing it:
+        self.protect_aspect_ratio = protect_aspect_ratio
 
-        if protect_aspect_ratio:
+        # What ratio of the image should be the collider:
+        self.collider_ratio = collider_ratio
+
+        # Setting the size in pixels:
+        # The size of the rect can change with the image size, but max_size doesn't
+        self.max_size = self.tile_to_pixel(size)
+
+        if image is None:
+            image = pygame.Surface(self.max_size)
+        self.rect = pygame.rect.Rect(position, self.max_size)
+
+        self.set_image(image)
+
+        self.collider = pygame.rect.Rect
+        self.collider_image = None
+        self.adjust_collider()
+
+        self.rect.center = self.collider.center
+
+    def tile_to_pixel(self, size):
+        return [dimension * self.tile_size for dimension in size]
+
+    def set_image(self, image):
+        if self.protect_aspect_ratio:
             # Resizing the tile whilst protecting the aspect ratio of the source image:
-            self.resize_image([dimension * tile_size for dimension in size])
+            self.image = Utils.resize_image(image, self.max_size)
         else:
             # Resizing the image without protecting the aspect ratio:
-            self.image = pygame.transform.scale(self.image, [dimension * tile_size for dimension in size])
+            self.image = pygame.transform.scale(image, self.max_size)
 
-        self.rect = self.image.get_rect(topleft=position)
+        self.rect.size = self.image.get_size()
 
-
+    def adjust_collider(self):
         # The size of the collider should be different to the size of the image for a more realistic result.
         # Adjusting the size of the collider as required:
-        self.collider = self.rect.copy().inflate([-(1 - collider_ratio[index]) * dimension
+        self.collider = self.rect.copy().inflate([-(1 - self.collider_ratio[index]) * dimension
                                                   for index, dimension in enumerate(self.rect.size)])
 
         # The image of the collider (for debugging, testing etc.):
@@ -44,34 +65,9 @@ class Tile(pygame.sprite.Sprite):
         self.collider_image.set_alpha(128)
         self.collider_image.fill(RED)
 
-
-    def resize_image(self, size):
-        current_image_size = self.image.get_size()
-        width = current_image_size[0]
-        height = current_image_size[1]
-
-        if width > height:
-            scale_factor = size[0] / width
-            width = size[0]
-            height *= scale_factor
-        else:
-            scale_factor = size[1] / height
-            height = size[1]
-            width *= scale_factor
-
-        # Setting the icon with the adjusted size:
-        self.image = pygame.transform.scale(self.image, (width, height))
-
     def draw(self, draw_offset):
         pygame.display.get_surface().blit(self.image, self.rect.topleft + draw_offset)
         # pygame.display.get_surface().blit(self.collider_image, self.collider.topleft + draw_offset)
 
     def get_collider(self):
         return self.collider
-
-    def get_layer_name(self):
-        return self.layer_name
-
-
-
-

@@ -1,32 +1,39 @@
 import os
 import sqlite3
 from player import *
+from strings import *
+from items import *
 
 
 class DatabaseHelper:
-
-    # Constants for the type of setting:
+    # Setting types:
     FRAME_RATE_LIMIT = 0
     SHOW_FRAME_RATE = 1
     AUDIO_VOLUME = 2
 
-    def __init__(self):
+    # Item Types (storing these here as the Weapon and Potion classes do not need them):
+    WEAPON = 0
+    POTION = 1
+
+    def __init__(self, game):
+        self.game = game
+
         # Name of the relational database:
         self.database = "database.db"
 
         # Checking if the database already exists, no need to set it up again:
-        if os.path.isfile(self.database): return
+        if not os.path.isfile(self.database): self.set_up_tables()
 
-
+    def set_up_tables(self):
         # Creating database tables:
         connection = sqlite3.connect(self.database)
         cursor = connection.cursor()
 
         # Settings Table:
         cursor.execute("""CREATE TABLE IF NOT EXISTS SETTINGS(
-                            TYPE INTEGER PRIMARY KEY NOT NULL,
-                            VALUE REAL NOT NULL
-                            )""")
+                                   TYPE INTEGER PRIMARY KEY NOT NULL,
+                                   VALUE REAL NOT NULL
+                                   )""")
 
         # Default values for settings:
         cursor.executemany("INSERT INTO SETTINGS VALUES(?, ?)",
@@ -36,35 +43,106 @@ class DatabaseHelper:
 
         # Levels Table:
         connection.execute("""CREATE TABLE IF NOT EXISTS LEVELS(
-                            ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                            NAME TEXT NOT NULL,
-                            FOLDER_PATH TEXT NOT NULL,
-                            R INTEGER NOT NULL,
-                            G INTEGER NOT NULL,
-                            B INTEGER NOT NULL
-                            )""")
+                                   ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                                   NAME TEXT UNIQUE NOT NULL,
+                                   FOLDER_PATH TEXT UNIQUE NOT NULL,
+                                   R INTEGER NOT NULL,
+                                   G INTEGER NOT NULL,
+                                   B INTEGER NOT NULL
+                                   )""")
 
+        level_folder = "../level_maps"
         # Inserting levels:
         cursor.executemany("INSERT INTO LEVELS VALUES(NULL, ?, ?, ?, ?, ?)",
-                           [("Test Map", "../level_maps/test_map", 145, 171, 23)])
+                           [("Test Map", level_folder + "/" + "test_map/map.tmx", 145, 171, 23)])
 
         # Player Stats Table:
         cursor.execute("""CREATE TABLE PLAYER_STATS(
-                            TYPE INTEGER PRIMARY KEY NOT NULL,
-                            VALUE REAL
+                                   TYPE INTEGER PRIMARY KEY NOT NULL,
+                                   VALUE REAL
+                                   )""")
+
+        cursor.executemany("INSERT INTO PLAYER_STATS VALUES(?, ?)",
+                           [(Player.CURRENT_LEVEL_ID, 0),
+                            (Player.FULL_HEALTH, 0),
+                            (Player.CURRENT_HEALTH, 0),
+                            (Player.SPEED_MULTIPLIER, 0),
+                            (Player.MELEE_DAMAGE_MULTIPLIER, 0),
+                            (Player.MELEE_COOLDOWN_MULTIPLIER, 1),
+                            (Player.MAGIC_DAMAGE_MULTIPLIER, 0),
+                            (Player.MAGIC_COOLDOWN_MULTIPLIER, 1),
+                            (Player.KILLS, 0)])
+
+        # All items table (width and height in tile size):
+        cursor.execute("""CREATE TABLE IF NOT EXISTS ITEMS(
+                            NAME STRING PRIMARY KEY NOT NULL,
+                            IMAGE_PATH STRING NOT NULL,
+                            LENGTH REAL NOT NULL,
+                            TYPE INTEGER NOT NULL
                             )""")
 
-        cursor.executemany("INSERT INTO PLAYER_STATS VALUES(?, 0)",
-                           [(Player.CURRENT_LEVEL_ID,),
-                            (Player.FULL_HEALTH,),
-                            (Player.CURRENT_HEALTH,),
-                            (Player.RUN_SPEED,),
-                            (Player.MELEE_DAMAGE,),
-                            (Player.MELEE_COOLDOWN_MULTIPLIER,),
-                            (Player.MAGIC_DAMAGE,),
-                            (Player.MAGIC_COOLDOWN_MULTIPLIER,),
-                            (Player.KILLS,)])
+        item_folder = "../assets/images/graphics/weapons"
+        cursor.executemany("INSERT INTO ITEMS VALUES(?, ?, ?, ?)",
+                           [(SWORD, item_folder + "/" + "sword", 0.7, self.WEAPON),
+                            (LANCE, item_folder + "/" + "lance", 0.5, self.WEAPON),
+                            (AXE, item_folder + "/" + "axe", 0.5, self.WEAPON),
+                            (RAPIER, item_folder + "/" + "rapier", 0.5, self.WEAPON),
+                            (SAI, item_folder + "/" + "sai", 0.5, self.WEAPON)])
 
+        # Weapon properties table:
+        cursor.execute("""CREATE TABLE IF NOT EXISTS WEAPON_PROPERTIES(
+                        ITEM_NAME PRIMARY KEY NOT NULL,
+                        DAMAGE FLOAT NOT NULL,
+                        COOLDOWN FLOAT NOT NULL
+                        )""")
+
+        cursor.executemany("INSERT INTO WEAPON_PROPERTIES VALUES(?, ?, ?)",
+                           [(SWORD, 15, 750),
+                            (LANCE, 30, 800),
+                            (AXE, 35, 1000),
+                            (RAPIER, 30, 500),
+                            (SAI, 10, 600)])
+
+        # Potion properties table:S
+        cursor.execute("""CREATE TABLE IF NOT EXISTS POTION_PROPERTIES(
+                        ITEM_NAME PRIMARY KEY NOT NULL,
+                        HEALTH_BOOST FLOAT NOT NULL,
+                        MOVEMENT_SPEED_MULTIPLIER FLOAT NOT NULL,
+                        ATTACK DAMAGE MULTIPLIER FLOAT NOT NULL,
+                        MAGIC DAMAGE MULTIPLIER FLOAT NOT NULL
+                        )""")
+
+        # Player inventory table:
+        cursor.execute("""CREATE TABLE IF NOT EXISTS INVENTORY(
+                            ITEM_NAME STRING PRIMARY KEY NOT NULL,
+                            QUANTITY INTEGER NOT NULL
+                        )""")
+
+        cursor.executemany("INSERT INTO INVENTORY VALUES(?, ?)",
+                           [(SWORD, 1),
+                            (LANCE, 2),
+                            (AXE, 3),
+                            (RAPIER, 4),
+                            (SAI, 5)])
+
+        connection.commit()
+        connection.close()
+
+    def delete_saves(self):
+        connection = sqlite3.connect(self.database)
+        cursor = connection.cursor()
+
+        # Deleting all tables one by one:
+        # Even need to delete item property tables since the values would be inserted twice:
+        cursor.execute("DROP TABLE IF EXISTS SETTINGS")
+        cursor.execute("DROP TABLE IF EXISTS LEVELS")
+        cursor.execute("DROP TABLE IF EXISTS PLAYER_STATS")
+        cursor.execute("DROP TABLE IF EXISTS ITEMS")
+        cursor.execute("DROP TABLE IF EXISTS WEAPON_PROPERTIES")
+        cursor.execute("DROP TABLE IF EXISTS POTION_PROPERTIES")
+        cursor.execute("DROP TABLE IF EXISTS INVENTORY")
+
+        self.set_up_tables()
 
         connection.commit()
         connection.close()
@@ -134,7 +212,6 @@ class DatabaseHelper:
 
         return colour
 
-
     def get_player_stats(self):
         connection = sqlite3.connect(self.database)
         cursor = connection.cursor()
@@ -143,31 +220,88 @@ class DatabaseHelper:
         cursor.execute("SELECT * FROM PLAYER_STATS")
 
         cursor_return = cursor.fetchall()
-        if cursor_return[0] is not None:
-
-            stats = {}
+        stats = {}
+        if cursor_return is not None:
             for item in cursor_return:
                 stats[item[0]] = item[1]
-
-        else:
-            stats = None
 
         connection.commit()
         connection.close()
 
         return stats
 
-    def update_player_stats(self, player):
+    def update_player_stats(self, player_stats):
+        # Parameter name player_object to avoid shadows:
         connection = sqlite3.connect(self.database)
         cursor = connection.cursor()
 
-        stats = player.get_stats()
-
-        for key in stats:
-            cursor.execute("UPDATE PLAYER_STATS SET VALUE=? WHERE TYPE=?", [stats[key], key])
-
+        for stat_type in player_stats:
+            cursor.execute("UPDATE PLAYER_STATS SET VALUE=? WHERE TYPE=?", [player_stats[stat_type], stat_type])
 
         connection.commit()
         connection.close()
 
+    def get_player_inventory(self):
+        connection = sqlite3.connect(self.database)
+        cursor = connection.cursor()
 
+        # Retrieving inventory:
+        cursor.execute("SELECT * FROM INVENTORY")
+
+        inventory_return = cursor.fetchall()
+        inventory = {}
+        if inventory_return is not None:
+
+            for index, item in enumerate(inventory_return):
+                name = inventory_return[index][0]
+                quantity = inventory_return[index][1]
+
+                # Retrieving item path and type:
+                cursor.execute("SELECT IMAGE_PATH, TYPE, LENGTH FROM ITEMS WHERE NAME=?", [name])
+                item_return = cursor.fetchone()
+                item_path = item_return[0]
+                item_type = item_return[1]
+                item_length = item_return[2]
+
+                # Instantiating correct class based on item type:
+                match item_type:
+
+                    case self.WEAPON:
+                        # Retrieving weapon properties:
+                        cursor.execute("SELECT DAMAGE, COOLDOWN FROM WEAPON_PROPERTIES WHERE ITEM_NAME=?", [name])
+                        weapon_return = cursor.fetchone()
+                        damage = weapon_return[0]
+                        cooldown = weapon_return[1]
+
+                        inventory_item = Weapon(self.game, name, damage, cooldown, item_path, (item_length, item_length))
+
+                    case _:
+                        inventory_item = None
+
+
+                inventory[inventory_item] = quantity
+
+        connection.commit()
+        connection.close()
+
+        return inventory
+
+    def update_player_inventory(self, player_inventory):
+        # Parameter name player_object to avoid shadows:
+        connection = sqlite3.connect(self.database)
+        cursor = connection.cursor()
+
+        for item in player_inventory:
+            item_name = item.get_name()
+
+            # First checking if item is in inventory to update or add:
+            cursor.execute("SELECT * FROM INVENTORY WHERE NAME=?", [item_name])
+            if len(cursor.fetchall()) > 0:
+                # If the item is already in inventory, just update quantity:
+                cursor.execute("UPDATE INVENTORY SET QUANTITY=? WHERE NAME=?", [item])
+            else:
+                # If the item is not in the inventory add it:
+                cursor.execute("INSERT INTO INVENTORY VALUES(?, ?)", [item_name, player_inventory[item_name]])
+
+        connection.commit()
+        connection.close()

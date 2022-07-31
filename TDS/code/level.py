@@ -1,19 +1,12 @@
 import pygame.display
 from pytmx import *
-from utils import *
-from tile import Tile
-from player import Player
-from colours import *
-import math
+
 from assets import *
+from player import Player
+from tile import Tile
 
-
-# TODO: Transparent blue rectangle to give night effect
 
 class Level:
-    # File names:
-    MAP_FILE = "map.tmx"
-
     # Layer Names:
     GROUND = "ground"
     RIVER = "river"
@@ -23,12 +16,12 @@ class Level:
     TREES = "trees"
     ROCKS = "rocks"
     BUILDINGS = "buildings"
+    PLAYER = "player"
     BARRIERS = "barriers"
     COLLIDERS = "colliders"
 
     # Other constants:
     TILE_RESOLUTION = 256
-    NIGHT_COLOUR = (0, 71, 171)
 
     def __init__(self, game, level_id, min_tile_count=15):
         self.player = None
@@ -59,13 +52,15 @@ class Level:
         # Groups determining how the sprites should be categorised.
         # They are not mutually exclusive:
         self.all_tiles = pygame.sprite.Group()  # All the sprites in the level.
-        self.flat_tiles = pygame.sprite.Group()   # Sprites with no depth effect.
+        self.flat_tiles = pygame.sprite.Group()  # Sprites with no depth effect.
         self.depth_tiles = pygame.sprite.Group()  # Sprites with depth effect.
         self.dynamic_tiles = pygame.sprite.Group()  # Sprites that should be updated.
-        self.obstacle_tiles = pygame.sprite.Group()   # Sprites that have collision.
+        self.obstacle_tiles = pygame.sprite.Group()  # Sprites that have collision.
+        self.vulnerable_tiles = pygame.sprite.Group()  # Sprites with health - except the player.
         self.depth_tiles_in_frame = pygame.sprite.Group()  # Depth sprites that are on-screen.
-        self.flat_tiles_in_frame = pygame.sprite.Group()   # Flat sprites that are on-screen.
-        self.obstacle_tiles_in_frame = pygame.sprite.Group()   # Obstacle sprites that are on-screen.
+        self.flat_tiles_in_frame = pygame.sprite.Group()  # Flat sprites that are on-screen.
+        self.obstacle_tiles_in_frame = pygame.sprite.Group()  # Obstacle sprites that are on-screen.
+
 
         # Importing map path:
         level_id = int(level_id)
@@ -76,36 +71,15 @@ class Level:
         # Setting the scale factor for the correct conversion of the position of objects:
         self.scale_factor = self.TILE_RESOLUTION / self.tile_size
 
-
         # Getting background colour:
         self.background_colour = self.database_helper.get_background_colour(self.level_id)
 
-        self.tmx_data = load_pygame(self.path + "/" + self.MAP_FILE)
-        self.set_up_map()
-
+        self.tmx_data = load_pygame(self.path)
+        self.set_up_done = False
 
     def set_up_map(self):
-
-        # TODO: GET PLAYER INVENTORY AND STATS
-        # TODO: UPDATE CURRENT LEVEL ID ? WILL IT NEED UPDATING? YES
-        # TODO: Run speed should be a number of tiles per second
-
-        player_stats = self.database_helper.get_player_stats()
-
-        self.player = Player(self.game, self, (1000, 1000), {Player.CURRENT_LEVEL_ID: self.level_id,
-                                                             Player.FULL_HEALTH: 100,
-                                                             Player.CURRENT_HEALTH: 100,
-                                                             # Run speed is tiles per second
-                                                             Player.RUN_SPEED: 5,
-                                                             Player.MELEE_DAMAGE: 1000,
-                                                             Player.MELEE_COOLDOWN_MULTIPLIER: 1,
-                                                             Player.MAGIC_DAMAGE: 1000,
-                                                             Player.MAGIC_COOLDOWN_MULTIPLIER: 1,
-                                                             Player.KILLS: 100}, {})
-
-        self.depth_tiles.add(self.player)
-        self.dynamic_tiles.add(self.player)
-        self.all_tiles.add(self.player)
+        if self.set_up_done: return
+        self.set_up_done = True
 
         # Setting up layers:
         self.set_up_layer(self.RIVER, visible=True, depth=False, obstacle=False)
@@ -116,10 +90,13 @@ class Level:
         self.set_up_layer(self.ROCKS, collider_ratio=(0.7, 0.7), visible=True, depth=True, obstacle=True)
         # Because buildings can have different shapes, their colliders are made of individual barriers:
         self.set_up_layer(self.BUILDINGS, visible=True, depth=True, obstacle=False)
+        self.set_up_layer(self.PLAYER, visible=True, depth=True, obstacle=False, dynamic=True)
+
         self.set_up_layer(self.BARRIERS, collider_ratio=(1, 1), visible=False, obstacle=True)
         self.set_up_layer(self.COLLIDERS, collider_ratio=(1, 1), visible=False, obstacle=True)
 
-    def set_up_layer(self, layer_name, collider_ratio=(0.9, 0.9), visible=True, depth=True, obstacle=True):
+    def set_up_layer(self, layer_name, collider_ratio=(0.9, 0.9), visible=True, depth=True, obstacle=True,
+                     dynamic=False):
         # Could not find a way to handle tile rotation or flipping - the pytmx docs say that this is
         # automatically handled when getting the image, but not working for me :/
 
@@ -132,39 +109,42 @@ class Level:
         if isinstance(layer, TiledObjectGroup):
             for map_object in layer:
                 if map_object.image is not None:
-                    # Adjusting for any rotation:
-                    #TODO: CHECK ROTATION
-                    image = pygame.transform.rotate(map_object.image, map_object.rotation)
-                    tile = Tile(self, (map_object.x / self.scale_factor, (map_object.y / self.scale_factor) + 1),
-                                layer_name,
-                                size=(map_object.width / self.TILE_RESOLUTION, map_object.height / self.TILE_RESOLUTION),
-                                collider_ratio=collider_ratio, surface=image, protect_aspect_ratio=False)
+                    tile = Tile(self.game, (map_object.x / self.scale_factor, (map_object.y / self.scale_factor) + 1),
+                                size=(
+                                map_object.width / self.TILE_RESOLUTION, map_object.height / self.TILE_RESOLUTION),
+                                collider_ratio=collider_ratio, image=map_object.image, protect_aspect_ratio=False)
                     # Adding to correct groups:
                     if visible:
-                        if depth:
-                            self.depth_tiles.add(tile)
-                        else:
-                            self.flat_tiles.add(tile)
-                    if obstacle:
-                        self.obstacle_tiles.add(tile)
+                        if depth: self.depth_tiles.add(tile)
+                        else: self.flat_tiles.add(tile)
+                    if obstacle: self.obstacle_tiles.add(tile)
+                    if dynamic: self.dynamic_tiles.add(tile)
                     self.all_tiles.add(tile)
 
         # If tile layer:
         elif isinstance(layer, TiledTileLayer):
             for x, y, surface in layer.tiles():
                 if surface is not None:
-                    tile = Tile(self, (x * self.tile_size, y * self.tile_size), layer_name,
-                                collider_ratio=collider_ratio, surface=surface, protect_aspect_ratio=True)
+                    tile_position = (x * self.tile_size, y * self.tile_size)
+
+                    # Checking if the layer is player or enemy etc.,
+                    # as the relevant classes need to be instantiated for those:
+                    match layer_name:
+                        case self.PLAYER:
+                            self.refresh_player()
+                            tile = self.player
+                            tile.collider.topleft = tile_position
+                        case _:
+                            tile = Tile(self.game, tile_position,
+                                        collider_ratio=collider_ratio, image=surface, protect_aspect_ratio=True)
                     # Adding to correct groups:
                     if visible:
-                        if depth:
-                            self.depth_tiles.add(tile)
-                        else:
-                            self.flat_tiles.add(tile)
-                    if obstacle:
-                        self.obstacle_tiles.add(tile)
-                    self.all_tiles.add(tile)
+                        if depth: self.depth_tiles.add(tile)
+                        else: self.flat_tiles.add(tile)
+                    if obstacle: self.obstacle_tiles.add(tile)
+                    if dynamic: self.dynamic_tiles.add(tile)
 
+                    self.all_tiles.add(tile)
 
     def draw_map(self):
         # Calculating how far the player is from the centre of the screen,
@@ -204,6 +184,14 @@ class Level:
             if pygame.Rect.colliderect(sprite.rect, screen_rect):
                 self.flat_tiles_in_frame.add(sprite)
 
+    def refresh_player(self):
+        # Because player is an object, it will automatically be updated in each group it is in:
+        # Re-obtains the player's stats from the database:
+        self.player = Player(self.game, (0, 0),
+                             self.database_helper.get_player_stats(),
+                             self.database_helper.get_player_inventory())
+
+
     def get_background_colour(self):
         return self.background_colour
 
@@ -234,4 +222,3 @@ class Level:
     def update(self):
         self.dynamic_tiles.update()
         self.draw_map()
-

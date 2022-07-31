@@ -3,8 +3,12 @@ from strings import *
 from abc import ABC, abstractmethod
 import pygame
 
+# TODO: Integrate UI elements into game world.
+# TODO: Have an optional draw offset in draw methods.
+# TODO: Create sprites as usual, add relevant UI element into lists, Voila!
 
-# TODO: Make self.size take in pixel values
+# TODO: Fix overlapping buttons problem
+
 
 # An abstract class which all the UI elements inherit from:
 class View(ABC, pygame.sprite.Sprite):
@@ -129,6 +133,7 @@ class View(ABC, pygame.sprite.Sprite):
 
     def set_visibility(self, value):
         self.visible = value
+
     def place_above(self, view):
         # Placing the current UI element above the stated UI element, taking into account margins:
         self.rect.midbottom = (view.get_rect().midtop[0],
@@ -208,8 +213,6 @@ class TextLine(View):
         self.text_string = str(text_string)
         self.text = self.font.render(self.text_string, True, self.text_colour)
         self.set_size(self.game.pixel_to_unit_point(self.text.get_size()))
-        # Re-calculating its location to prevent overlap:
-        self.calculate_position(exclusion_relations=(self,))
 
     def draw_text(self, colour):
         text_centre = self.rect.center
@@ -270,7 +273,7 @@ class Text(View):
         self.text_hover_colour = text_hover_colour
 
 
-        super().__init__(game, size=(0, 0), visible=visible,
+        super().__init__(game, visible=visible,
                          position=position, above=above, below=below, to_left_of=to_left_of, to_right_of=to_right_of,
                          centre_between=centre_between,
                          margin=margin, padding=padding,
@@ -350,8 +353,6 @@ class Text(View):
             if text_horizontal > max_horizontal:
                 max_horizontal = text_horizontal
             total_vertical += size[1]
-
-
         return max_horizontal, total_vertical
 
 
@@ -371,15 +372,15 @@ class Image(View):
                  frame_colour=BLACK,
                  frame_hover_colour=BLACK):
 
+        # Setting up the image icon:
+        self.icon = None
+
         super().__init__(game, size=size, visible=visible,
                          position=position, above=above, below=below, to_right_of=to_right_of, to_left_of=to_left_of,
                          centre_between=centre_between,
                          margin=margin, padding=padding,
                          frame_condition=frame_condition, frame_thickness=frame_thickness, corner_radius=corner_radius,
                          frame_colour=frame_colour, frame_hover_colour=frame_hover_colour)
-
-        # Setting up the image icon:
-        self.icon = None
 
         # The maximum size of the icon - the size of the button without padding:
         self.max_icon_size = size
@@ -408,6 +409,13 @@ class Image(View):
         # Setting the icon with the adjusted size:
         self.icon = pygame.transform.scale(self.icon, (icon_width, icon_height))
 
+    def set_size(self, size):
+        super().set_size(size)
+        if self.icon is not None:
+            self.max_icon_size = size
+            self.update_icon_size()
+
+
     def draw(self):
         super().draw()
         icon_centre = self.rect.center
@@ -433,7 +441,7 @@ class Button(View):
 
         if text_string is not None:
             # The button is a text button:
-            self.target = TextLine(game, text_string, font_size=font_size, visible=True,
+            self.target = TextLine(game, text_string, font_size=font_size, visible=visible,
                                    position=position, above=above, below=below, to_right_of=to_right_of,
                                    to_left_of=to_left_of, centre_between=centre_between,
                                    margin=margin, padding=padding,
@@ -444,7 +452,7 @@ class Button(View):
                                    text_hover_colour=text_hover_colour)
         elif icon is not None:
             # The button is an image button:
-            self.target = Image(game, icon, size=size, visible=True,
+            self.target = Image(game, icon, size=size, visible=visible,
                                 position=position, above=above, below=below, to_right_of=to_right_of,
                                 to_left_of=to_left_of,
                                 centre_between=centre_between,
@@ -462,7 +470,7 @@ class Slider(View):
     def __init__(self, game, bar_size=(0.2, 0.005), handle_radius=0.01, start_value=(0, 0),
                  slide_horizontal=True, slide_vertical=False, visible=True,
                  position=(0, 0), above=None, below=None, to_right_of=None, to_left_of=None, centre_between=None,
-                 margin=0.02, padding=0,
+                 margin=0.02, padding=0.02,
                  bar_colour=SILVER, handle_colour=BLACK, handle_hover_colour=IRIS):
 
         # The slider can have values between 0-1 for each axis.
@@ -582,8 +590,11 @@ class Slider(View):
         # Whether the handle has just been grabbed:
         return self.handle_held and self.game.mouse_released()
 
-    def get_value(self, decimal_places=2):
-        return [round(item, decimal_places) for item in self.value]
+    def get_value(self, decimal_places=None):
+        if decimal_places is None:
+            return self.value
+        else:
+            return [round(item, decimal_places) for item in self.value]
 
     def handle_is_held(self):
         return self.handle_held
@@ -620,9 +631,8 @@ class Selector(TextLine):
         super().draw()
 
     def increment(self):
-        if self.selection_index < len(self.selection_strings) - 1:
-            self.selection_index += 1
-        else:
+        self.selection_index += 1
+        if self.selection_index >= len(self.selection_strings):
             self.selection_index = 0
 
         self.incremented = True
@@ -631,6 +641,8 @@ class Selector(TextLine):
         # It is necessary to update the state here.
         # if we didi not, when we call this function after the selector is clicked,
         # we would get the state just before the click.
+
+        # We cannot update the state in the draw function because that is called at the end of the game loop.
 
         if self.clicked():
 
@@ -718,10 +730,9 @@ class TextInput(TextLine):
                 self.hint_active = False
 
             self.handle_input()
-
         else:
+            # If the input length is 0 and the text is not in focus, showing hint:
             if len(self.text_string) == 0 and not self.in_focus:
-                # If the input length is 0 and the text is not in focus, showing hint:
                 self.hint_active = True
                 self.set_text(self.hint)
 
@@ -760,8 +771,8 @@ class TextInput(TextLine):
         try:
             key_string = chr(key)
 
+            # Any key corresponding to a string is allowed:
             if self.input_type == self.STRING:
-                # Any key corresponding to a string is allowed:
                 return True
             elif self.input_type == self.INTEGER:
                 # Any number is allowed.
@@ -784,3 +795,4 @@ class TextInput(TextLine):
 
     def set_hint(self, hint):
         self.hint = hint
+

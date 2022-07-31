@@ -1,6 +1,3 @@
-# TODO: Is a python file the best type for colours?
-
-
 # ~~ Defaults ~~ #
 
 RED = (255, 0, 0)

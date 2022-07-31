@@ -1,81 +1,135 @@
-import pygame
-from assets import *
+from strings import *
+from tile import Tile
 from utils import *
 
-
-class Player(pygame.sprite.Sprite):
+class Player(Tile):
     # Constants for player stat types:
     CURRENT_LEVEL_ID = 0
     FULL_HEALTH = 1
     CURRENT_HEALTH = 2
-    RUN_SPEED = 3  # Tiles per second
-    MELEE_DAMAGE = 4
+    SPEED_MULTIPLIER = 3  # Tiles per second
+    MELEE_DAMAGE_MULTIPLIER = 4
     MELEE_COOLDOWN_MULTIPLIER = 5
-    MAGIC_DAMAGE = 6
+    MAGIC_DAMAGE_MULTIPLIER = 6
     MAGIC_COOLDOWN_MULTIPLIER = 7
     KILLS = 8
 
     # Minimum and maximum values for starting player stats:
-    MIN_HEALTH = 75
-    MAX_HEALTH = 125
-    MIN_SPEED = 3
-    MAX_SPEED = 6
-    MIN_MAGIC = 75
-    MAX_MAGIC = 125
-    MIN_ATTACK = 75
-    MAX_ATTACK = 125
+    MIN_HEALTH = 0.75
+    MAX_HEALTH = 1.25
+    MIN_SPEED = 0.75
+    MAX_SPEED = 1.25
+    MIN_MAGIC = 0.75
+    MAX_MAGIC = 1.25
+    MIN_ATTACK = 0.75
+    MAX_ATTACK = 1.25
 
-    def __init__(self, game, level, position, stats, inventory):
+    # Where the animation files are located:
+    ANIMATION_PATH = "../assets/images/player"
 
-        self.game = game
-        self.level = level
+    # Animation folder names:
+    UP_MOVE = "up_move"
+    DOWN_MOVE = "down_move"
+    LEFT_MOVE = "left_move"
+    RIGHT_MOVE = "right_move"
+    UP_IDLE = "up_idle"
+    DOWN_IDLE = "down_idle"
+    LEFT_IDLE = "left_idle"
+    RIGHT_IDLE = "right_idle"
+    UP_ATTACK = "up_attack"
+    DOWN_ATTACK = "down_attack"
+    LEFT_ATTACK = "left_attack"
+    RIGHT_ATTACK = "right_attack"
 
-        super().__init__()
+    # Animation frame durations in ms:
+    ANIMATION_FRAME_TIME = 150
+
+    def __init__(self, game, position, stats, inventory):
+
+        super().__init__(game, position, collider_ratio=(1, 1))
 
         # Player stats and inventory dictionaries:
         self.stats = stats
         self.inventory = inventory
 
-        self.image = pygame.image.load(PLAYER_IMAGE).convert_alpha()
-        tile_size = self.level.get_tile_size()
-        self.image = pygame.transform.scale(self.image, (tile_size, tile_size))
-        self.rect = self.image.get_rect(center=position)
+        for item in inventory:
+            # How much the image should be offset by, so that the item aligns with the player's hand:
+            item.set_image_offsets({UP: pygame.Vector2(self.tile_to_pixel((-0.2, 0))),
+                                   DOWN: pygame.Vector2(self.tile_to_pixel((-0.2, 0))),
+                                   LEFT: pygame.Vector2(self.tile_to_pixel((0, 0.2))),
+                                   RIGHT: pygame.Vector2(self.tile_to_pixel((0, 0.2)))})
+
+        # Attributes for cooldown timers:
+        self.using_item = False
+        self.item_use_start_time = 0
+        self.item_selected = None
+        self.item_use_cooldown = None
+        self.set_item_held(list(self.inventory)[0])
 
         # Pygame provides vectors in 2D and 3D, and allows operations to be made using them:
+        # This is the direction at which the player is moving:
         self.direction = pygame.math.Vector2()
 
         # For very high frame rates, the number of pixels the player should travel per frame is less than 1.
         # For this reason, storing this value and adding it to the distance each frame:
         self.displacement_deficit = [0, 0]
 
-        self.attacking = False
-        self.attack_start_time = 0
+        # Speed in tiles per second:
+        self.speed = 5
 
-        # The collider will allow for the desired overlap effect:
-        self.collider = self.rect  # .inflate(0, game.unit_to_pixel(0.001))
+        self.animations = None
+        self.animation_status = self.DOWN_IDLE
+        self.animation_increment_time = 0
+        self.current_animation_frame_index = 0
+        self.import_animations()
 
-    def get_rect(self):
-        return self.rect
+        print("Player Stats: {}".format(self.stats))
+        print("Player Inventory: {}".format(self.inventory))
 
-    def get_stats(self):
-        return self.stats
+
+    def import_animations(self):
+        # A dictionary of animation folder names and lists of images in the folders:
+
+        self.animations = {
+            # Walking
+            self.UP_MOVE: [], self.DOWN_MOVE: [], self.LEFT_MOVE: [], self.RIGHT_MOVE: [],
+            # Stopping
+            self.UP_IDLE: [], self.DOWN_IDLE: [], self.LEFT_IDLE: [], self.RIGHT_IDLE: [],
+            # Attacking
+            self.UP_ATTACK: [], self.DOWN_ATTACK: [], self.LEFT_ATTACK: [], self.RIGHT_ATTACK: []
+        }
+
+        for folder_name in self.animations.keys():
+            final_path = self.ANIMATION_PATH + "/" + folder_name
+            self.animations[folder_name] = [Utils.resize_image(image, self.max_size)
+                                            for image in Utils.import_folder(final_path)]
 
     def handle_input(self):
+        # Player cannot control character if using item:
+        if self.using_item:
+            self.direction.update(0, 0)
+            return
+
         # Getting the keys that are being held down:
         keys_held = pygame.key.get_pressed()
 
         # Calculating the correct direction according to the keys held:
         if keys_held[pygame.K_a] and not keys_held[pygame.K_d]:
             self.direction.x = -1
+            self.animation_status = self.LEFT_MOVE
         elif keys_held[pygame.K_d] and not keys_held[pygame.K_a]:
             self.direction.x = 1
+            self.animation_status = self.RIGHT_MOVE
         else:
             self.direction.x = 0
 
         if keys_held[pygame.K_w] and not keys_held[pygame.K_s]:
             self.direction.y = -1
+            self.animation_status = self.UP_MOVE
         elif keys_held[pygame.K_s] and not keys_held[pygame.K_w]:
             self.direction.y = 1
+            self.animation_status = self.DOWN_MOVE
+
         else:
             self.direction.y = 0
 
@@ -84,16 +138,52 @@ class Player(pygame.sprite.Sprite):
         if self.direction.magnitude() != 0:
             self.direction = self.direction.normalize()
 
+        # Attack and magic input should trigger once per key-press:
         # Attack input:
-        if keys_held[pygame.K_SPACE] and not self.attacking:
-            self.attacking = True
-            self.attack_start_time = pygame.time.get_ticks()
-            print("ATTACK")
+        if self.game.key_pressed(pygame.K_SPACE) and not self.using_item:
+            self.use_item()
+        self.set_idle_animation()
 
-        if keys_held[pygame.K_LSHIFT] and not self.attacking:
-            self.attacking = True
-            self.attack_start_time = pygame.time.get_ticks()
-            print("MAGIC")
+    def use_item(self):
+        self.using_item = True
+        self.item_use_start_time = pygame.time.get_ticks()
+        self.set_attack_animation()
+
+    def increment_item_selected(self):
+        inventory_list = list(self.inventory)
+
+        item_index = inventory_list.index(self.item_selected) + 1
+        if item_index >= len(inventory_list):
+            item_index = 0
+        self.set_item_held(inventory_list[item_index])
+
+
+    def set_attack_animation(self):
+        match self.animation_status:
+            case self.UP_MOVE | self.UP_IDLE:
+                self.animation_status = self.UP_ATTACK
+            case self.DOWN_MOVE | self.DOWN_IDLE:
+                self.animation_status = self.DOWN_ATTACK
+            case self.LEFT_MOVE | self.LEFT_IDLE:
+                self.animation_status = self.LEFT_ATTACK
+            case self.RIGHT_MOVE | self.RIGHT_IDLE:
+                self.animation_status = self.RIGHT_ATTACK
+
+    def set_idle_animation(self):
+        if self.direction.magnitude() == 0 and not self.using_item:
+            match self.animation_status:
+                case self.UP_MOVE | self.UP_ATTACK:
+                    self.animation_status = self.UP_IDLE
+                case self.DOWN_MOVE | self.DOWN_ATTACK:
+                    self.animation_status = self.DOWN_IDLE
+                case self.LEFT_MOVE | self.LEFT_ATTACK:
+                    self.animation_status = self.LEFT_IDLE
+                case self.RIGHT_MOVE | self.RIGHT_ATTACK:
+                    self.animation_status = self.RIGHT_IDLE
+
+    def set_item_held(self, item):
+        self.item_selected = item
+        self.item_use_cooldown = self.item_selected.get_cooldown()
 
     def update_cooldown_timers(self):
         # The timers for when an action requires a cooldown.
@@ -102,8 +192,8 @@ class Player(pygame.sprite.Sprite):
 
         current_time = pygame.time.get_ticks()
 
-        if current_time - self.attack_start_time >= self.stats[self.MELEE_DAMAGE]:
-            self.attacking = False
+        if current_time - self.item_use_start_time >= self.item_use_cooldown:
+            self.using_item = False
 
     def move_player(self, speed):
         # In this implementation, the player is moved as usual, and if there is a collision, the player is moved to the
@@ -168,13 +258,49 @@ class Player(pygame.sprite.Sprite):
                         # The player is moving up, move the player below the obstacle:
                         self.collider.top = obstacle_collider.bottom
 
-    def draw(self, draw_offset):
-        pygame.display.get_surface().blit(self.image, self.rect.topleft + draw_offset)
+    def update_animation(self):
+        current_time = pygame.time.get_ticks()
 
-    def get_collider(self):
-        return self.collider
+        animation_frames = self.animations[self.animation_status]
+
+        if current_time >= self.animation_increment_time + self.ANIMATION_FRAME_TIME:
+            self.animation_increment_time = current_time
+            if self.current_animation_frame_index < len(animation_frames) - 1:
+                self.current_animation_frame_index += 1
+            else:
+                self.current_animation_frame_index = 0
+            self.image = animation_frames[self.current_animation_frame_index]
+            self.rect.size = self.image.get_size()
+            self.adjust_collider()
+
+    def get_animation_status(self):
+        return self.animation_status
+
+    def get_rect(self):
+        return self.rect
+
+    def get_stats(self):
+        return self.stats
+
+    def set_stats(self, stats):
+        self.stats = stats
+
+    def get_inventory(self):
+        return self.inventory
+
+    def set_inventory(self, inventory):
+        self.inventory = inventory
+
+    def get_item_selected(self):
+        return self.item_selected
+
+    def draw(self, draw_offset):
+        super().draw(draw_offset)
+        if self.using_item:
+            self.item_selected.draw(draw_offset, self)
 
     def update(self):
         self.handle_input()
         self.update_cooldown_timers()
-        self.move_player(self.stats[self.RUN_SPEED])
+        self.move_player(self.speed * self.stats[self.SPEED_MULTIPLIER])
+        self.update_animation()
