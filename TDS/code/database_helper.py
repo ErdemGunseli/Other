@@ -81,13 +81,13 @@ class DatabaseHelper:
                             TYPE INTEGER NOT NULL
                             )""")
 
-        item_folder = "../assets/images/graphics/weapons"
+        item_folder = "../assets/images/weapons"
         cursor.executemany("INSERT INTO ITEMS VALUES(?, ?, ?, ?)",
-                           [(SWORD, item_folder + "/" + "sword", 0.7, self.WEAPON),
-                            (LANCE, item_folder + "/" + "lance", 0.5, self.WEAPON),
-                            (AXE, item_folder + "/" + "axe", 0.5, self.WEAPON),
-                            (RAPIER, item_folder + "/" + "rapier", 0.5, self.WEAPON),
-                            (SAI, item_folder + "/" + "sai", 0.5, self.WEAPON)])
+                           [(SWORD, item_folder + "/" + "sword", 0.6, self.WEAPON),
+                            (LANCE, item_folder + "/" + "lance", 1.2, self.WEAPON),
+                            (AXE, item_folder + "/" + "axe", 0.7, self.WEAPON),
+                            (RAPIER, item_folder + "/" + "rapier", 0.7, self.WEAPON),
+                            (SAI, item_folder + "/" + "sai", 0.6, self.WEAPON)])
 
         # Weapon properties table:
         cursor.execute("""CREATE TABLE IF NOT EXISTS WEAPON_PROPERTIES(
@@ -97,11 +97,11 @@ class DatabaseHelper:
                         )""")
 
         cursor.executemany("INSERT INTO WEAPON_PROPERTIES VALUES(?, ?, ?)",
-                           [(SWORD, 15, 750),
-                            (LANCE, 30, 800),
-                            (AXE, 35, 1000),
-                            (RAPIER, 30, 500),
-                            (SAI, 10, 600)])
+                           [(SWORD, 20, 750),
+                            (LANCE, 30, 1000),
+                            (AXE, 35, 1200),
+                            (RAPIER, 10, 300),
+                            (SAI, 25, 850)])
 
         # Potion properties table:S
         cursor.execute("""CREATE TABLE IF NOT EXISTS POTION_PROPERTIES(

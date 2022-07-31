@@ -150,8 +150,9 @@ class Player(Tile):
         self.set_attack_animation()
 
     def increment_item_selected(self):
+        # Cannot swap item while using it:
+        if self.using_item: return
         inventory_list = list(self.inventory)
-
         item_index = inventory_list.index(self.item_selected) + 1
         if item_index >= len(inventory_list):
             item_index = 0

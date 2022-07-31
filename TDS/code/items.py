@@ -14,7 +14,7 @@ class Weapon(Tile):
     DOWN = "down.png"
     LEFT = "left.png"
     RIGHT = "right.png"
-    ICON = "full.png"
+    ICON = "icon.png"
 
     def __init__(self, game, name, damage, cooldown, image_path, size):
 
