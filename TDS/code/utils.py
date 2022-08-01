@@ -3,7 +3,7 @@ from os import walk
 
 
 class Utils:
-    # Using this function to import several files at once:
+
     @staticmethod
     def import_folder(path):
         # Pygame needs to be initiated for this function to work:
@@ -43,3 +43,7 @@ class Utils:
             width *= scale_factor
 
         return pygame.transform.scale(image, (width, height))
+
+    @staticmethod
+    def percentage_format(float_value):
+        return "{}%".format(int(float_value * 100))

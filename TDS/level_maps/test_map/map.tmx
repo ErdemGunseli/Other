@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="100" height="101" tilewidth="256" tileheight="256" infinite="0" nextlayerid="15" nextobjectid="1026">
+<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="100" height="101" tilewidth="256" tileheight="256" infinite="0" nextlayerid="15" nextobjectid="1027">
  <tileset firstgid="1" source="../../tilesets/summer_rpg/summer_rpg_objects.tsx"/>
  <tileset firstgid="40" source="../../tilesets/summer_rpg/summer_rpg_tiles.tsx"/>
  <tileset firstgid="107" source="../../tilesets/special/special_tiles.tsx"/>
@@ -852,6 +852,7 @@
   <object id="979" gid="25" x="25384.9" y="18862.9" width="445.424" height="436.182"/>
   <object id="985" gid="25" x="25370.5" y="11683" width="303" height="318"/>
   <object id="992" gid="24" x="24523.5" y="2996" width="617" height="832"/>
+  <object id="1026" gid="24" x="8331.5" y="26100" width="501" height="672"/>
  </objectgroup>
  <objectgroup id="10" name="buildings">
   <object id="165" gid="3" x="2217.56" y="10244.6" width="1068.27" height="1545.33"/>

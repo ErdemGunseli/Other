@@ -1,6 +1,8 @@
 from strings import *
 from tile import Tile
 from utils import *
+from user_interface import Text
+
 
 class Player(Tile):
     # Constants for player stat types:
@@ -12,7 +14,8 @@ class Player(Tile):
     MELEE_COOLDOWN_MULTIPLIER = 5
     MAGIC_DAMAGE_MULTIPLIER = 6
     MAGIC_COOLDOWN_MULTIPLIER = 7
-    KILLS = 8
+    INVULNERABILITY_DURATION = 8
+
 
     # Minimum and maximum values for starting player stats:
     MIN_HEALTH = 0.75
@@ -47,6 +50,7 @@ class Player(Tile):
     def __init__(self, game, position, stats, inventory):
 
         super().__init__(game, position, collider_ratio=(1, 1))
+        self.database_helper = game.get_database_helper()
 
         # Player stats and inventory dictionaries:
         self.stats = stats
@@ -59,9 +63,13 @@ class Player(Tile):
                                    LEFT: pygame.Vector2(self.tile_to_pixel((0, 0.2))),
                                    RIGHT: pygame.Vector2(self.tile_to_pixel((0, 0.2)))})
 
-        # Attributes for cooldown timers:
+        # Whether the player is using the item held:
         self.using_item = False
         self.item_use_start_time = 0
+        # Whether the player is currently invulnerable
+        # (the player is made invulnerable for a short period of time when taking damage):
+        self.invulnerable = True
+        self.invulnerability_start_time = 0
         self.item_selected = None
         self.item_use_cooldown = None
         self.set_item_held(list(self.inventory)[0])
@@ -158,7 +166,6 @@ class Player(Tile):
             item_index = 0
         self.set_item_held(inventory_list[item_index])
 
-
     def set_attack_animation(self):
         match self.animation_status:
             case self.UP_MOVE | self.UP_IDLE:
@@ -195,6 +202,9 @@ class Player(Tile):
 
         if current_time - self.item_use_start_time >= self.item_use_cooldown:
             self.using_item = False
+
+        if current_time - self.invulnerability_start_time >= self.stats[self.INVULNERABILITY_DURATION]:
+            self.invulnerable = False
 
     def move_player(self, speed):
         # In this implementation, the player is moved as usual, and if there is a collision, the player is moved to the
@@ -277,6 +287,25 @@ class Player(Tile):
     def get_animation_status(self):
         return self.animation_status
 
+    @staticmethod
+    def deal_damage(recipient, damage_value):
+        recipient.receive_damage(damage_value)
+
+    def receive_damage(self, damage_value):
+        if self.invulnerable: return
+        self.invulnerable = True
+        self.invulnerability_start_time = pygame.time.get_ticks()
+
+        self.stats[self.CURRENT_HEALTH] -= damage_value
+
+        if self.stats[self.CURRENT_HEALTH] <= 0:
+            self.death_sequence()
+
+    def death_sequence(self):
+        self.stats[self.CURRENT_HEALTH] = self.stats[self.FULL_HEALTH]
+        self.level.set_done(True)
+        self.game.show_death_screen()
+
     def get_rect(self):
         return self.rect
 
@@ -299,6 +328,7 @@ class Player(Tile):
         super().draw(draw_offset)
         if self.using_item:
             self.item_selected.draw(draw_offset, self)
+
 
     def update(self):
         self.handle_input()

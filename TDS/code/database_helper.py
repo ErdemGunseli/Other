@@ -66,12 +66,12 @@ class DatabaseHelper:
                            [(Player.CURRENT_LEVEL_ID, 0),
                             (Player.FULL_HEALTH, 0),
                             (Player.CURRENT_HEALTH, 0),
-                            (Player.SPEED_MULTIPLIER, 0),
-                            (Player.MELEE_DAMAGE_MULTIPLIER, 0),
+                            (Player.SPEED_MULTIPLIER, 1),
+                            (Player.MELEE_DAMAGE_MULTIPLIER, 1),
                             (Player.MELEE_COOLDOWN_MULTIPLIER, 1),
-                            (Player.MAGIC_DAMAGE_MULTIPLIER, 0),
+                            (Player.MAGIC_DAMAGE_MULTIPLIER, 1),
                             (Player.MAGIC_COOLDOWN_MULTIPLIER, 1),
-                            (Player.KILLS, 0)])
+                            (Player.INVULNERABILITY_DURATION, 200)])
 
         # All items table (width and height in tile size):
         cursor.execute("""CREATE TABLE IF NOT EXISTS ITEMS(
@@ -83,11 +83,11 @@ class DatabaseHelper:
 
         item_folder = "../assets/images/weapons"
         cursor.executemany("INSERT INTO ITEMS VALUES(?, ?, ?, ?)",
-                           [(SWORD, item_folder + "/" + "sword", 0.6, self.WEAPON),
+                           [(KNIGHT_SWORD, item_folder + "/" + "sword", 0.6, self.WEAPON),
                             (LANCE, item_folder + "/" + "lance", 1.2, self.WEAPON),
-                            (AXE, item_folder + "/" + "axe", 0.7, self.WEAPON),
+                            (BATTLE_AXE, item_folder + "/" + "axe", 0.7, self.WEAPON),
                             (RAPIER, item_folder + "/" + "rapier", 0.7, self.WEAPON),
-                            (SAI, item_folder + "/" + "sai", 0.6, self.WEAPON)])
+                            (Trident, item_folder + "/" + "sai", 0.6, self.WEAPON)])
 
         # Weapon properties table:
         cursor.execute("""CREATE TABLE IF NOT EXISTS WEAPON_PROPERTIES(
@@ -97,11 +97,11 @@ class DatabaseHelper:
                         )""")
 
         cursor.executemany("INSERT INTO WEAPON_PROPERTIES VALUES(?, ?, ?)",
-                           [(SWORD, 20, 750),
+                           [(KNIGHT_SWORD, 20, 750),
                             (LANCE, 30, 1000),
-                            (AXE, 35, 1200),
+                            (BATTLE_AXE, 35, 1200),
                             (RAPIER, 10, 300),
-                            (SAI, 25, 850)])
+                            (Trident, 25, 850)])
 
         # Potion properties table:S
         cursor.execute("""CREATE TABLE IF NOT EXISTS POTION_PROPERTIES(
@@ -119,11 +119,11 @@ class DatabaseHelper:
                         )""")
 
         cursor.executemany("INSERT INTO INVENTORY VALUES(?, ?)",
-                           [(SWORD, 1),
+                           [(KNIGHT_SWORD, 1),
                             (LANCE, 2),
-                            (AXE, 3),
+                            (BATTLE_AXE, 3),
                             (RAPIER, 4),
-                            (SAI, 5)])
+                            (Trident, 5)])
 
         connection.commit()
         connection.close()

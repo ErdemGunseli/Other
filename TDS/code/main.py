@@ -1,11 +1,5 @@
 import pygame
 from pygame import mixer
-
-from debug import *
-from strings import *
-from assets import *
-from player import Player
-from utils import *
 from user_interface import *
 from level import *
 from database_helper import DatabaseHelper
@@ -28,7 +22,8 @@ class Game:
         # Getting the current resolution of the physical screen:
         screen_info = pygame.display.Info()
         self.resolution = [screen_info.current_w, screen_info.current_h]
-        self.screen = pygame.display.set_mode(self.resolution, pygame.FULLSCREEN)
+        self.resolution = (1280, 720)
+        self.screen = pygame.display.set_mode(self.resolution) # , pygame.FULLSCREEN)
         self.rect = self.screen.get_rect()
         pygame.display.set_caption(GAME_NAME)
         self.clock = pygame.time.Clock()
@@ -39,21 +34,19 @@ class Game:
         else:
             self.window_dimensions = [1, 1 + self.resolution[1] / self.resolution[0]]
 
+        # Setting up display:
+        pygame.display.set_caption(GAME_NAME)
+
+        # The font of the game:
+        self.font = FONT
+        self.all_events = []
+        self.key_down_events = []
+
         self.frame_rate = None
         self.show_frame_rate = None
         self.audio_volume = None
         self.current_level = None
         self.refresh_settings()
-
-        # Setting up display:
-        pygame.display.set_caption(GAME_NAME)
-        self.clock = pygame.time.Clock()
-
-        # The font of the game:
-        self.font = FONT
-
-        self.all_events = []
-        self.key_down_events = []
         self.start_game()
 
     def refresh_settings(self):
@@ -67,8 +60,7 @@ class Game:
         self.audio_volume = self.database_helper.get_setting(DatabaseHelper.AUDIO_VOLUME)
 
         # Setting up level:
-        level_id = self.database_helper.get_player_stats()[Player.CURRENT_LEVEL_ID]
-        self.current_level = Level(self, level_id)
+        self.update_current_level()
 
     def start_game(self):
         self.show_main_menu()
@@ -89,6 +81,11 @@ class Game:
     def get_current_level(self):
         return self.current_level
 
+    def update_current_level(self):
+        # Setting up level:
+        level_id = self.database_helper.get_player_stats()[Player.CURRENT_LEVEL_ID]
+        self.current_level = Level(self, level_id)
+
     def get_database_helper(self):
         return self.database_helper
 
@@ -96,7 +93,11 @@ class Game:
         return self.clock.get_fps()
 
     def get_current_frame_time(self):
-        return 1 / self.clock.get_fps()
+        frame_time = self.clock.get_fps()
+        if frame_time != 0:
+            return 1 / frame_time
+        else:
+            return 1
 
     def get_frame_rate_cap(self):
         return self.frame_rate
@@ -139,16 +140,10 @@ class Game:
         return False
 
     def mouse_pressed(self):
-        for event in self.all_events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                return True
-        return False
+        return pygame.MOUSEBUTTONDOWN in [event.type for event in self.all_events]
 
     def mouse_released(self):
-        for event in self.all_events:
-            if event.type == pygame.MOUSEBUTTONUP:
-                return True
-        return False
+        return pygame.MOUSEBUTTONUP in [event.type for event in self.all_events]
 
     def get_rect(self):
         return self.rect
@@ -205,12 +200,14 @@ class Game:
 
         while not self.done:
             self.screen.fill(WHITE)
+            self.update()
 
             if self.key_pressed(pygame.K_1):
                 self.testing()
 
             # On Click:
             if btn_play.clicked():
+                print(self.database_helper.get_player_stats()[Player.FULL_HEALTH] == 0)
                 if self.database_helper.get_player_stats()[Player.FULL_HEALTH] == 0:
                     self.show_character_menu()
                 self.show_game()
@@ -218,7 +215,6 @@ class Game:
             elif btn_quit.clicked(): self.quit()
 
             for view in views: view.draw()
-            self.update()
             pygame.display.flip()
             self.clock.tick(self.frame_rate)
 
@@ -318,6 +314,7 @@ class Game:
 
         while not self.done:
             self.screen.fill(WHITE)
+            self.update()
 
             # If the refresh rate has been changed and the input is not empty, set it to the attribute:
             if edt_txt_frame_rate.unfocused() and not edt_txt_frame_rate.input_empty():
@@ -343,7 +340,6 @@ class Game:
                 return
 
             for view in views: view.draw()
-            self.update()
             pygame.display.flip()
             self.clock.tick(self.frame_rate)
 
@@ -408,6 +404,8 @@ class Game:
 
         while not self.done:
             self.screen.fill(WHITE)
+            self.update()
+
             if self.key_pressed(pygame.K_ESCAPE): return
 
             if btn_1.clicked():
@@ -421,7 +419,6 @@ class Game:
                 txt_3.set_text(sl_2.get_value())
 
             for view in views: view.draw()
-            self.update()
             pygame.display.flip()
             self.clock.tick(self.frame_rate)
 
@@ -463,10 +460,10 @@ class Game:
         magic = round(Player.MIN_MAGIC + (Player.MAX_MAGIC - Player.MIN_MAGIC) * slider_values[0], 2)
         attack = round(Player.MIN_ATTACK + (Player.MAX_ATTACK - Player.MIN_ATTACK) * (1 - slider_values[0]), 2)
 
-        txt_stats = Text(self, CHARACTER_STATS.format(int(health * 100),
-                                                      int(movement * 100),
-                                                      int(attack * 100),
-                                                      int(magic * 100)),
+        txt_stats = Text(self, CHARACTER_STATS.format(Utils.percentage_format(health),
+                                                      Utils.percentage_format(movement),
+                                                      Utils.percentage_format(attack),
+                                                      Utils.percentage_format(magic)),
                          centre_between=(self.rect.center, self.rect.midright),
                          font_size=0.065)
         views.append(txt_stats)
@@ -494,6 +491,7 @@ class Game:
 
         while not self.done:
             self.screen.fill(WHITE)
+            self.update()
 
             if self.key_pressed(pygame.K_ESCAPE):
                 return
@@ -504,10 +502,10 @@ class Game:
                 movement = round(Player.MIN_SPEED + (Player.MAX_SPEED - Player.MIN_SPEED) * (1 - slider_values[1]), 2)
                 magic = round(Player.MIN_MAGIC + (Player.MAX_MAGIC - Player.MIN_MAGIC) * slider_values[0], 2)
                 attack = round(Player.MIN_ATTACK + (Player.MAX_ATTACK - Player.MIN_ATTACK) * (1 - slider_values[0]), 2)
-                txt_stats.set_text(CHARACTER_STATS.format(int(health * 100),
-                                                          int(movement * 100),
-                                                          int(attack * 100),
-                                                          int(magic * 100)))
+                txt_stats.set_text(CHARACTER_STATS.format(Utils.percentage_format(health),
+                                                          Utils.percentage_format(movement),
+                                                          Utils.percentage_format(attack),
+                                                          Utils.percentage_format(magic)))
 
             if btn_continue.clicked():
                 if edt_txt_player_name.input_empty():
@@ -518,47 +516,26 @@ class Game:
                                                               Player.SPEED_MULTIPLIER: movement,
                                                               Player.MELEE_DAMAGE_MULTIPLIER: attack,
                                                               Player.MAGIC_DAMAGE_MULTIPLIER: magic})
-                    self.current_level.refresh_player()
+                    print(self.database_helper.get_player_stats())
                     return
 
             if txt_warning.clicked():
                 txt_warning.set_visibility(False)
 
             for view in views: view.draw()
-            self.update()
-            pygame.display.flip()
-            self.clock.tick(self.frame_rate)
-
-    def show_inventory(self):
-        player = self.current_level.get_player()
-
-        views = []
-
-        img_current_weapon = Image(self, icon=player.get_item_selected().get_icon(),
-                                   centre_between=(self.rect.center, self.rect.midright),
-                                   size=(0.2, 0.2),
-                                   padding=0.01,
-                                   frame_condition=View.ALWAYS)
-        views.append(img_current_weapon)
-
-        while not self.done:
-            self.screen.fill(WHITE)
-
-            if self.key_pressed(pygame.K_ESCAPE): return
-
-            self.update()
-            for view in views: view.draw()
             pygame.display.flip()
             self.clock.tick(self.frame_rate)
 
     def show_game(self):
         background_colour = self.current_level.get_background_colour()
-        self.current_level.set_up_map()
 
+        # Map needs to be set up after we have correct player from player creation menu:
+        self.current_level.set_up_map()
         player = self.current_level.get_player()
 
         views = []
 
+        # Pause button:
         btn_pause = Button(self, icon=pygame.image.load(PAUSE_ICON).convert_alpha(),
                            size=(0.05, 0.05),
                            padding=0.01,
@@ -567,6 +544,7 @@ class Game:
                                                                             btn_pause.get_margin())
         views.append(btn_pause)
 
+        # Switch item button:
         btn_switch = Button(self, icon=pygame.image.load(SWITCH_ICON).convert_alpha(),
                             size=(0.05, 0.05),
                             padding=0.01,
@@ -574,6 +552,7 @@ class Game:
         btn_switch.get_rect().midright = self.rect.midright + pygame.Vector2(-btn_switch.get_margin(), 0)
         views.append(btn_switch)
 
+        # Use item button:
         btn_use = Button(self, icon=player.get_item_selected().get_icon(),
                          below=btn_switch,
                          size=(0.05, 0.05),
@@ -581,29 +560,96 @@ class Game:
                          frame_condition=View.ALWAYS)
         views.append(btn_use)
 
-        # TODO: SHOW QUANTITY
+        # Item properties text:
+        txt_item = Text(self, player.get_item_selected().properties(player),
+                        text_alignment=View.CENTRE,
+                        font_size=0.02,
+                        padding=0.0075,
+                        frame_thickness=0,
+                        text_colour=WHITE,
+                        frame_colour=BLACK,
+                        text_hover_colour=WHITE,
+                        frame_hover_colour=BLACK)
+        margin = txt_item.get_margin()
+        txt_item.get_rect().bottomright = self.rect.bottomright + pygame.Vector2(-margin, -margin)
+        txt_item.position_texts()
+        views.append(txt_item)
 
-        while not self.done:
+        # Health bar:
+        pr_health = ProgressBar(self, to_left_of=btn_pause)
+        views.append(pr_health)
+
+
+        while (not self.done) and (not self.current_level.is_done()):
             self.screen.fill(background_colour)
+            self.current_level.update()
 
+            # Go to main menu if paused:
             if self.key_pressed(pygame.K_ESCAPE) or btn_pause.clicked(): return
 
+            # Increment item selected:
             if self.key_pressed(pygame.K_TAB) or btn_switch.clicked():
                 player.increment_item_selected()
-                # After switching item, the icon needs to be updated:
+                # After switching item, the icon and text need to be updated:
                 btn_use.set_icon(player.get_item_selected().get_icon())
+                txt_item.set_text(player.get_item_selected().properties(player))
 
+            # Use item:
             if btn_use.clicked():
                 player.use_item()
 
-            self.current_level.update()
+            # For testing TODO: REMOVE:
+            if pr_health.clicked():
+                player.receive_damage(0.05)
+
+            pr_health.set_progress(player.get_stats()[Player.CURRENT_HEALTH] / player.get_stats()[Player.FULL_HEALTH])
+
+            for view in views: view.draw()
+            # Putting update at the bottom so the FPS counter is always visible:
+            self.update()
+            pygame.display.flip()
+            self.clock.tick(self.frame_rate)
+
+        # After a level is done, update:
+        if not self.done:
+            self.update_current_level()
+            self.show_game()
+
+
+    def show_death_screen(self):
+        views = []
+        btn_continue = Button(self, text_string=CONTINUE,
+                              position=self.rect.center,
+                              text_colour=PLATINUM)
+        views.append(btn_continue)
+
+        txt_died = TextLine(self, YOU_DIED,
+                            font_size=0.2,
+                            above=btn_continue,
+                            text_colour=RED,
+                            text_hover_colour=RED)
+        views.append(txt_died)
+
+        btn_quit = Button(self, QUIT,
+                          below=btn_continue,
+                          text_colour=PLATINUM)
+        views.append(btn_quit)
+
+        while not self.done:
+            self.screen.fill(BLACK)
             self.update()
 
-            # Only drawing view elements if enabled:
+            # Go back to the level:
+            if self.key_pressed(pygame.K_ESCAPE) or btn_continue.clicked(): return
+
+            if btn_quit.clicked(): self.done = True
 
             for view in views: view.draw()
             pygame.display.flip()
             self.clock.tick(self.frame_rate)
+
+
+# TODO: Optimise progress bar
 
 
 Game()

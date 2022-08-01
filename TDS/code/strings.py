@@ -25,9 +25,12 @@ BACK = "Back"
 
 # ~~ Character Creation ~~ #
 CONTINUE = "Continue"
-CHARACTER_STATS = "Maximum Health: {}%\nMovement Speed: {}%\nAttack Damage: {}%\nMagic Damage: {}%"
+CHARACTER_STATS = "Maximum Health: {}\nMovement Speed: {}\nAttack Damage: {}\nMagic Damage: {}"
 CHARACTER_NAME = "Character Name"
 ENTER_CHARACTER_NAME = "Please Enter a Character Name"
+
+# ~~ Death ~~ #
+YOU_DIED = "You Died"
 
 # ~~ Misc ~~ #
 ON = "On"
@@ -41,13 +44,11 @@ RIGHT = "right"
 # ~!~ Items ~!~ #
 
 # ~~ Weapons ~~ #
-SWORD = "Sword"
+KNIGHT_SWORD = "Knight's Sword"
 LANCE = "Lance"
-AXE = "Axe"
+BATTLE_AXE = "Battle Axe"
 RAPIER = "Rapier"
-SAI = "Sai"
-
-
+Trident = "Trident"
 
 # ~~ Stats ~~ #
 FULL_HEALTH = "Full Health"

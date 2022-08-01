@@ -3,12 +3,9 @@ import pygame.transform
 from strings import *
 
 
-# TODO: Animation instead of image? - No need to animate weapons.
-
 # TODO: So far, the weapon class is very similar to how a generic item class would need to be.
 #  Change name to item, then add spcial weapon attributes
 class Weapon(Tile):
-
     # Weapon image file names:
     UP = "up.png"
     DOWN = "down.png"
@@ -17,7 +14,6 @@ class Weapon(Tile):
     ICON = "icon.png"
 
     def __init__(self, game, name, damage, cooldown, image_path, size):
-
         self.image_path = image_path
 
         super().__init__(game, size=size)
@@ -34,7 +30,6 @@ class Weapon(Tile):
         self.image_offsets = None
 
         self.import_images()
-
 
     def import_images(self):
         # A dictionary of animation folder names and lists of images in the folders:
@@ -81,6 +76,15 @@ class Weapon(Tile):
         self.rect.center = self.collider.center
         self.rect.size = self.image.get_size()
         self.adjust_collider()
+
+    def properties(self, player):
+        player_stats = player.get_stats()
+        player_inventory = player.get_inventory()
+        return "{}\nDamage: {}\nCooldown: {}\nQuantity: {}".format(
+            self.name,
+            round(self.damage * player_stats[Player.MELEE_DAMAGE_MULTIPLIER], 2),
+            round(self.cooldown * player_stats[Player.MELEE_COOLDOWN_MULTIPLIER], 2),
+            player_inventory[self])
 
     def draw(self, draw_offset, player=None):
         self.adjust_image(player)

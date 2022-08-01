@@ -31,6 +31,9 @@ class Level:
         self.display = pygame.display.get_surface()
         display_size = self.display.get_size()
 
+        # Whether the level is done:
+        self.done = False
+
         # Calculating the pixel size of each tile according to how many should fit on-screen:
         if display_size[0] > display_size[1]:
             self.tile_size = display_size[1] // min_tile_count
@@ -49,18 +52,16 @@ class Level:
         # Draw offset amount such that the player is always centred:
         self.draw_offset = pygame.math.Vector2()
 
-        # Groups determining how the sprites should be categorised.
-        # They are not mutually exclusive:
-        self.all_tiles = pygame.sprite.Group()  # All the sprites in the level.
-        self.flat_tiles = pygame.sprite.Group()  # Sprites with no depth effect.
-        self.depth_tiles = pygame.sprite.Group()  # Sprites with depth effect.
-        self.dynamic_tiles = pygame.sprite.Group()  # Sprites that should be updated.
-        self.obstacle_tiles = pygame.sprite.Group()  # Sprites that have collision.
-        self.vulnerable_tiles = pygame.sprite.Group()  # Sprites with health - except the player.
-        self.depth_tiles_in_frame = pygame.sprite.Group()  # Depth sprites that are on-screen.
-        self.flat_tiles_in_frame = pygame.sprite.Group()  # Flat sprites that are on-screen.
-        self.obstacle_tiles_in_frame = pygame.sprite.Group()  # Obstacle sprites that are on-screen.
-
+        self.all_tiles = None
+        self.flat_tiles = None
+        self.depth_tiles = None
+        self.dynamic_tiles = None
+        self.obstacle_tiles = None
+        self.vulnerable_tiles = None
+        self.depth_tiles_in_frame = None
+        self.flat_tiles_in_frame = None
+        self.obstacle_tiles_in_frame = None
+        self.set_up_groups()
 
         # Importing map path:
         level_id = int(level_id)
@@ -75,11 +76,24 @@ class Level:
         self.background_colour = self.database_helper.get_background_colour(self.level_id)
 
         self.tmx_data = load_pygame(self.path)
-        self.set_up_done = False
+        self.map_set_up_done = False
+
+    def set_up_groups(self):
+        # Groups determining how the sprites should be categorised.
+        # They are not mutually exclusive:
+        self.all_tiles = pygame.sprite.Group()  # All the sprites in the level.
+        self.flat_tiles = pygame.sprite.Group()  # Sprites with no depth effect.
+        self.depth_tiles = pygame.sprite.Group()  # Sprites with depth effect.
+        self.dynamic_tiles = pygame.sprite.Group()  # Sprites that should be updated.
+        self.obstacle_tiles = pygame.sprite.Group()  # Sprites that have collision.
+        self.vulnerable_tiles = pygame.sprite.Group()  # Sprites with health - except the player.
+        self.depth_tiles_in_frame = pygame.sprite.Group()  # Depth sprites that are on-screen.
+        self.flat_tiles_in_frame = pygame.sprite.Group()  # Flat sprites that are on-screen.
+        self.obstacle_tiles_in_frame = pygame.sprite.Group()  # Obstacle sprites that are on-screen.
 
     def set_up_map(self):
-        if self.set_up_done: return
-        self.set_up_done = True
+        if self.map_set_up_done: return
+        self.map_set_up_done = True
 
         # Setting up layers:
         self.set_up_layer(self.RIVER, visible=True, depth=False, obstacle=False)
@@ -191,7 +205,6 @@ class Level:
                              self.database_helper.get_player_stats(),
                              self.database_helper.get_player_inventory())
 
-
     def get_background_colour(self):
         return self.background_colour
 
@@ -218,6 +231,12 @@ class Level:
 
     def get_scale_factor(self):
         return self.scale_factor
+
+    def is_done(self):
+        return self.done
+
+    def set_done(self, value):
+        self.done = value
 
     def update(self):
         self.dynamic_tiles.update()

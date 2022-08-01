@@ -3,8 +3,6 @@ from utils import *
 from colours import *
 
 
-# TODO: Try centering image at the center of the collider?
-
 class Tile(pygame.sprite.Sprite):
 
     # The size attribute is the size of the tile relative to the default tile size.

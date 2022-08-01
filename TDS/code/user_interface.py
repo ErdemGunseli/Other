@@ -1,13 +1,17 @@
 from colours import *
 from strings import *
 from abc import ABC, abstractmethod
+from utils import *
 import pygame
 
-# TODO: Integrate UI elements into game world.
-# TODO: Have an optional draw offset in draw methods.
-# TODO: Create sprites as usual, add relevant UI element into lists, Voila!
 
-# TODO: Fix overlapping buttons problem
+# TODO: Integrate UI elements into game world.
+#  Have an optional draw offset in draw methods.
+#  Create sprites as usual, add relevant UI element into lists, Voila!
+
+# TODO: Improve Slider and Progress Bar functionality - do not use so many rectangles as the position of the slider
+#  should entirely be determined by its rectangle.
+#  Make them like text where the position of the surface is calculated from the rect:
 
 
 # An abstract class which all the UI elements inherit from:
@@ -23,6 +27,10 @@ class View(ABC, pygame.sprite.Sprite):
     LEFT = 1
     RIGHT = 2
 
+    # Orientation
+    HORIZONTAL = 0
+    VERTICAL = 1
+
     # IMPORTANT: For attributes such as margin, padding, frame_thickness, corner_radius, font_size, etc.
     # Their values are the proportion of the screen which they should occupy, since the game needs to be
     # resolution independent, and passing those values as pixels would prevent this.
@@ -33,7 +41,6 @@ class View(ABC, pygame.sprite.Sprite):
                  margin=0.02, padding=0.02,
                  frame_condition=NEVER, frame_thickness=0.005, corner_radius=0.01,
                  frame_colour=BLACK, frame_hover_colour=SMOKE):
-
         super().__init__()
 
         # The game is passed as an attribute to access its attributes and methods:
@@ -78,10 +85,6 @@ class View(ABC, pygame.sprite.Sprite):
         self.set_size(size)
 
     def calculate_position(self, exclusion_relations=None):
-        if exclusion_relations is None:
-            exclusion_relations = []
-        else:
-            exclusion_relations = list(exclusion_relations)
 
         # Placing item according to relation:
         if self.above is not None:
@@ -107,10 +110,20 @@ class View(ABC, pygame.sprite.Sprite):
         elif self.centre_between is not None:
             self.rect.center = self.place_centre_between(self.centre_between)
 
+
+        self.adjust_relations(exclusion_relations=exclusion_relations)
+
+    def adjust_relations(self, exclusion_relations=None):
+        if exclusion_relations is None:
+            exclusion_relations = []
+        else:
+            exclusion_relations = list(exclusion_relations)
+
         for relation in self.relations:
             if relation not in exclusion_relations:
                 exclusion_relations.append(relation)
                 relation.calculate_position(exclusion_relations=exclusion_relations)
+
 
     def add_relation(self, view):
         self.relations.append(view)
@@ -188,7 +201,6 @@ class TextLine(View):
                  margin=0.02, padding=0.02,
                  frame_condition=View.NEVER, frame_thickness=0.005, corner_radius=0.01,
                  frame_colour=BLACK, text_colour=BLACK, frame_hover_colour=BLACK, text_hover_colour=BLACK):
-
         # Converting font size from a ratio of the screen size to pixels:
         self.font_size = game.unit_to_pixel(font_size)
         self.font = game.get_font(self.font_size)
@@ -256,7 +268,6 @@ class Text(View):
                  margin=0.02, padding=0.02,
                  frame_condition=View.ALWAYS, frame_thickness=0.005, corner_radius=0.01,
                  frame_colour=BLACK, text_colour=BLACK, frame_hover_colour=BLACK, text_hover_colour=BLACK):
-
         # Converting font size from a ratio of the screen size to pixels:
         self.font_size = game.unit_to_pixel(font_size)
         self.font = game.get_font(self.font_size)
@@ -271,7 +282,6 @@ class Text(View):
         # The colour of the text:
         self.text_colour = text_colour
         self.text_hover_colour = text_hover_colour
-
 
         super().__init__(game, visible=visible,
                          position=position, above=above, below=below, to_left_of=to_left_of, to_right_of=to_right_of,
@@ -306,10 +316,13 @@ class Text(View):
         self.set_size(self.game.pixel_to_unit_point(self.calculate_size()))
 
     def set_text(self, text_string):
-        self.text_lines = []
-
         # The individual text strings are separated by line breaks:
         self.text_strings = list(str(text_string).split("\n"))
+
+        self.position_texts()
+
+    def position_texts(self):
+        self.text_lines = []
 
         for index, text_string in enumerate(self.text_strings):
             # Creating text line object:
@@ -344,6 +357,9 @@ class Text(View):
             else:  # text_alignment == View.CENTRE
                 text_line.get_rect().midtop = (self.rect.centerx, y)
 
+    def get_text_lines(self):
+        return self.text_lines
+
     def calculate_size(self):
         max_horizontal = 0
         total_vertical = 0
@@ -354,7 +370,6 @@ class Text(View):
                 max_horizontal = text_horizontal
             total_vertical += size[1]
         return max_horizontal, total_vertical
-
 
     def draw(self):
         if not self.visible: return
@@ -371,7 +386,6 @@ class Image(View):
                  frame_condition=View.NEVER, frame_thickness=0.005, corner_radius=0.01,
                  frame_colour=BLACK,
                  frame_hover_colour=BLACK):
-
         # Setting up the image icon:
         self.icon = None
 
@@ -415,7 +429,6 @@ class Image(View):
             self.max_icon_size = size
             self.update_icon_size()
 
-
     def draw(self):
         super().draw()
         icon_centre = self.rect.center
@@ -433,7 +446,6 @@ class Button(View):
                  margin=0.02, padding=0.02,
                  frame_condition=View.HOVER, frame_thickness=0.005, corner_radius=0.01, frame_colour=BLACK,
                  text_colour=BLACK, frame_hover_colour=SMOKE, text_hover_colour=SMOKE):
-
         super().__init__(game, size=size, position=position, above=above, below=below, to_right_of=to_right_of,
                          to_left_of=to_left_of, centre_between=centre_between, margin=margin, padding=padding,
                          frame_condition=frame_condition, frame_thickness=frame_thickness, corner_radius=corner_radius,
@@ -472,7 +484,6 @@ class Slider(View):
                  position=(0, 0), above=None, below=None, to_right_of=None, to_left_of=None, centre_between=None,
                  margin=0.02, padding=0.02,
                  bar_colour=SILVER, handle_colour=BLACK, handle_hover_colour=IRIS):
-
         # The slider can have values between 0-1 for each axis.
         # Ensuring that the slider is centered on a given axis if it cannot slide on that axis:
         start_value = list(start_value)
@@ -600,6 +611,77 @@ class Slider(View):
         return self.handle_held
 
 
+class ProgressBar(View):
+
+    # TODO: Optimise
+
+    def __init__(self, game, font_size=0.03, bar_size=(0.25, 0.025), start_progress=0,
+                 orientation=View.HORIZONTAL, visible=True,
+                 position=(0, 0), above=None, below=None, to_right_of=None, to_left_of=None, centre_between=None,
+                 margin=0.02, padding=0.01,
+                 frame_condition=View.ALWAYS, frame_thickness=0.005, corner_radius=0.01,
+                 bar_colour=RED, frame_colour=BLACK, text_colour=WHITE,
+                 frame_hover_colour=BLACK, text_hover_colour=BLACK):
+
+        self.orientation = orientation
+
+        # The slider bar - this cannot simply be the frame of the parent since that encompasses padding.
+        # The inheritance isn't perfect as this class doesn't use the frame, but it works as required nonetheless.
+        # Tentative location value (0,0), corrected afterwards:
+        self.max_size = game.unit_to_pixel_point(bar_size)
+        self.bar = pygame.Rect((0, 0), self.max_size)
+        self.bar_colour = bar_colour
+
+        super().__init__(game, size=bar_size, visible=visible,
+                         position=position, above=above, below=below, to_left_of=to_left_of, to_right_of=to_right_of,
+                         centre_between=centre_between,
+                         margin=margin, padding=padding,
+                         frame_condition=frame_condition, frame_thickness=frame_thickness, corner_radius=corner_radius,
+                         frame_colour=frame_colour, frame_hover_colour=frame_hover_colour,)
+
+        self.progress_text = TextLine(self.game,
+                                      position=self.rect.center,
+                                      font_size=font_size,
+                                      frame_condition=View.NEVER,
+                                      text_colour=text_colour, text_hover_colour=text_hover_colour)
+        self.progress_text.get_rect().center = self.rect.center
+
+        self.progress = None
+        self.set_progress(start_progress)
+
+    def set_progress(self, progress):
+        self.progress = progress
+        bar_size = self.progress_to_size()
+
+        if self.orientation == View.HORIZONTAL:
+            self.bar.width = bar_size
+        else:
+            self.bar.height = bar_size
+
+        self.progress_text.set_text(Utils.percentage_format(self.progress))
+
+    def progress_to_size(self):
+        # Returns the position that the progress bar should end given the current progress:
+        if self.orientation == View.HORIZONTAL:
+            dimension = self.max_size[0]
+        else:
+            dimension = self.rect.height
+
+        return int((self.progress * dimension))
+
+
+    def draw_progress(self):
+        pygame.draw.rect(self.display, self.bar_colour, self.bar, border_radius=self.corner_radius)
+
+    def draw(self):
+        # Aligning rectangles:
+        self.bar.topleft = self.rect.topleft + pygame.Vector2(self.padding, self.padding)
+        self.progress_text.get_rect().center = self.bar.center
+        super().draw()
+        self.draw_progress()
+        self.progress_text.draw()
+
+
 # A UI element that cycles through strings when clicked:
 class Selector(TextLine):
 
@@ -608,7 +690,6 @@ class Selector(TextLine):
                  margin=0.02, padding=0.02,
                  frame_condition=View.HOVER, frame_thickness=0.005, corner_radius=0.01,
                  frame_colour=BLACK, text_colour=BLACK, frame_hover_colour=SMOKE, text_hover_colour=SMOKE):
-
         # Whether the slider has just been incremented:
         self.incremented = False
 
@@ -645,7 +726,6 @@ class Selector(TextLine):
         # We cannot update the state in the draw function because that is called at the end of the game loop.
 
         if self.clicked():
-
             if not self.incremented:
                 # If the slider has just been clicked and not yet incremented, increment it:
                 self.increment()
@@ -669,7 +749,6 @@ class TextInput(TextLine):
                  frame_condition=View.ALWAYS, frame_thickness=0.005, corner_radius=0.01,
                  frame_colour=BLACK, text_colour=BLACK, frame_hover_colour=SMOKE, text_hover_colour=SMOKE,
                  frame_focus_colour=IRIS, text_focus_colour=IRIS):
-
         # The input type that is allowed:
         self.input_type = input_type
 
@@ -759,7 +838,6 @@ class TextInput(TextLine):
                         self.set_text(self.text_string + chr(key).upper())
                     else:
                         self.set_text(self.text_string + chr(key).lower())
-
 
     def unfocused(self):
         # Whether the UI element has just lost focus:
