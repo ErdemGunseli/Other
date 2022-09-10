@@ -2,10 +2,16 @@ import pygame
 from pygame import mixer
 from user_interface import *
 from level import *
+from strings import *
 from database_helper import DatabaseHelper
 
 
-# TODO: mixer.find_channel()
+# mixer.find_channel()
+# TODO: Make Game Class Singleton (low important)
+#  Improve UI - Each component should use 1 rectangle (medium importance)
+#  Create event consumption system or use pygame one (low importance)
+#  Create basic sounds (high importance)
+#  Create enemy (high importance)
 
 class Game:
 
@@ -22,8 +28,7 @@ class Game:
         # Getting the current resolution of the physical screen:
         screen_info = pygame.display.Info()
         self.resolution = [screen_info.current_w, screen_info.current_h]
-        self.resolution = (1280, 720)
-        self.screen = pygame.display.set_mode(self.resolution) # , pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode(self.resolution, pygame.FULLSCREEN)
         self.rect = self.screen.get_rect()
         pygame.display.set_caption(GAME_NAME)
         self.clock = pygame.time.Clock()
@@ -47,7 +52,6 @@ class Game:
         self.audio_volume = None
         self.current_level = None
         self.refresh_settings()
-        self.start_game()
 
     def refresh_settings(self):
         # Getting the frame rate cap setting from the database:
@@ -121,8 +125,7 @@ class Game:
         self.database_helper.update_setting(DatabaseHelper.AUDIO_VOLUME, audio_volume)
         mixer.music.set_volume(audio_volume)
 
-    def get_key_down_events(self):
-        return self.key_down_events
+    def get_key_down_events(self): return self.key_down_events
 
     def get_input(self):
         self.all_events = pygame.event.get()
@@ -139,14 +142,11 @@ class Game:
             if key_input == key_id: return True
         return False
 
-    def mouse_pressed(self):
-        return pygame.MOUSEBUTTONDOWN in [event.type for event in self.all_events]
+    def mouse_pressed(self): return pygame.MOUSEBUTTONDOWN in [event.type for event in self.all_events]
 
-    def mouse_released(self):
-        return pygame.MOUSEBUTTONUP in [event.type for event in self.all_events]
+    def mouse_released(self): return pygame.MOUSEBUTTONUP in [event.type for event in self.all_events]
 
-    def get_rect(self):
-        return self.rect
+    def get_rect(self): return self.rect
 
     def unit_to_pixel(self, value):
         # Conversion between pixels and arbitrary units:
@@ -579,7 +579,6 @@ class Game:
         pr_health = ProgressBar(self, to_left_of=btn_pause)
         views.append(pr_health)
 
-
         while (not self.done) and (not self.current_level.is_done()):
             self.screen.fill(background_colour)
             self.current_level.update()
@@ -615,7 +614,6 @@ class Game:
             self.update_current_level()
             self.show_game()
 
-
     def show_death_screen(self):
         views = []
         btn_continue = Button(self, text_string=CONTINUE,
@@ -649,7 +647,5 @@ class Game:
             self.clock.tick(self.frame_rate)
 
 
-# TODO: Optimise progress bar
-
-
-Game()
+if __name__ == "__main__":
+    Game().start_game()

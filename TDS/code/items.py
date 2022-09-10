@@ -4,7 +4,7 @@ from strings import *
 
 
 # TODO: So far, the weapon class is very similar to how a generic item class would need to be.
-#  Change name to item, then add spcial weapon attributes
+#  Change name to item, then add special weapon attributes
 class Weapon(Tile):
     # Weapon image file names:
     UP = "up.png"

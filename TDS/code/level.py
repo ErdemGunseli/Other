@@ -232,6 +232,9 @@ class Level:
     def get_scale_factor(self):
         return self.scale_factor
 
+    def get_draw_offset(self):
+        return self.draw_offset
+
     def is_done(self):
         return self.done
 

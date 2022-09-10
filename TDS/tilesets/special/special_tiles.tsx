@@ -5,6 +5,6 @@
   <image width="256" height="256" source="barrier.jfif"/>
  </tile>
  <tile id="1">
-  <image width="256" height="256" source="player.jpg"/>
+  <image width="256" height="256" source="player.png"/>
  </tile>
 </tileset>

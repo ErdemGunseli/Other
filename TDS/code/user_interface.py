@@ -4,14 +4,27 @@ from abc import ABC, abstractmethod
 from utils import *
 import pygame
 
+# TODO: !!! CREATE THEME/STYLE OBJECT THAT DEFAULT VALUES ARE OBTAINED FROM
 
 # TODO: Integrate UI elements into game world.
 #  Have an optional draw offset in draw methods.
-#  Create sprites as usual, add relevant UI element into lists, Voila!
+#  Create sprites as usual, add relevant UI element into lists!
 
 # TODO: Improve Slider and Progress Bar functionality - do not use so many rectangles as the position of the slider
 #  should entirely be determined by its rectangle.
 #  Make them like text where the position of the surface is calculated from the rect:
+# TODO: SAME PROBLEM WITH TEXT BOX
+
+# TODO: PADDING ISSUE WITH TEXT
+
+# TODO: HOVER COLOURS SHOULD DEFAULT TO NONE, AND IF THEY ARE NONE, BE SET THE SAME AS THE NON-HOVER !!!!!!!!!
+
+# TODO: RELATIONAL ALIGNMENT
+
+
+"""
+This is my own UI framework, providing a dynamic component library, layout management, and responsive rendering.
+"""
 
 
 # An abstract class which all the UI elements inherit from:
@@ -31,10 +44,13 @@ class View(ABC, pygame.sprite.Sprite):
     HORIZONTAL = 0
     VERTICAL = 1
 
-    # IMPORTANT: For attributes such as margin, padding, frame_thickness, corner_radius, font_size, etc.
-    # Their values are the proportion of the screen which they should occupy, since the game needs to be
-    # resolution independent, and passing those values as pixels would prevent this.
-    # (i.e. 0.02 margin means that the margin of the object is 2% of the smaller dimension of the screen)
+    """
+    IMPORTANT: For attributes such as margin, padding, frame_thickness, corner_radius, font_size, etc.
+    Their values are the proportion of the screen which they should occupy, since the game needs to be
+    resolution independent, and passing those values as pixels would prevent this.
+    (i.e. 0.02 margin means that the margin of the object is 2% of the smaller dimension of the screen)
+    """
+
     @abstractmethod
     def __init__(self, game, size=(0, 0), visible=True,
                  position=(0, 0), above=None, below=None, to_left_of=None, to_right_of=None, centre_between=None,
@@ -46,7 +62,7 @@ class View(ABC, pygame.sprite.Sprite):
         # The game is passed as an attribute to access its attributes and methods:
         self.game = game
 
-        # The UI elements with a relationship with the current oneL
+        # The UI elements with a relationship with the current one (used for responsive rendering):
         self.relations = []
 
         # Whether the UI element is visible:
@@ -55,11 +71,11 @@ class View(ABC, pygame.sprite.Sprite):
         # The display surface:
         self.display = pygame.display.get_surface()
 
-        # Converting padding and margin from a ratio of the screen size to pixels:
+        # Converting padding and margin from a ratio of the screen size to raw pixels:
         self.margin = self.game.unit_to_pixel(margin)
         self.padding = self.game.unit_to_pixel(padding)
 
-        # When the frame should be shown:
+        # When the frame/border/background should be shown:
         self.frame_condition = frame_condition
         # The colour of the frame:
         self.frame_colour = frame_colour
@@ -108,9 +124,9 @@ class View(ABC, pygame.sprite.Sprite):
                 self.relations.append(self.to_right_of)
                 self.to_right_of.add_relation(self)
         elif self.centre_between is not None:
-            self.rect.center = self.place_centre_between(self.centre_between)
+            self.rect.center = self.get_centre_between(self.centre_between)
 
-
+        # Re-positioning UI elements related to this one:
         self.adjust_relations(exclusion_relations=exclusion_relations)
 
     def adjust_relations(self, exclusion_relations=None):
@@ -167,7 +183,8 @@ class View(ABC, pygame.sprite.Sprite):
         self.rect.midleft = [view.get_rect().midright[0] + view.get_margin() + self.margin,
                              view.get_rect().midright[1]]
 
-    def place_centre_between(self, points):
+    @staticmethod
+    def get_centre_between(points):
         # Places the UI element to the centre of 2 pre-existing UI elements
         value = (points[0][0] + points[1][0]) / 2, (points[0][1] + points[1][1]) / 2
         return value
@@ -613,8 +630,6 @@ class Slider(View):
 
 class ProgressBar(View):
 
-    # TODO: Optimise
-
     def __init__(self, game, font_size=0.03, bar_size=(0.25, 0.025), start_progress=0,
                  orientation=View.HORIZONTAL, visible=True,
                  position=(0, 0), above=None, below=None, to_right_of=None, to_left_of=None, centre_between=None,
@@ -873,4 +888,3 @@ class TextInput(TextLine):
 
     def set_hint(self, hint):
         self.hint = hint
-
