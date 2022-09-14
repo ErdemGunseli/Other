@@ -567,9 +567,7 @@ class Game:
                         padding=0.0075,
                         frame_thickness=0,
                         text_colour=WHITE,
-                        frame_colour=BLACK,
-                        text_hover_colour=WHITE,
-                        frame_hover_colour=BLACK)
+                        frame_colour=BLACK)
         margin = txt_item.get_margin()
         txt_item.get_rect().bottomright = self.rect.bottomright + pygame.Vector2(-margin, -margin)
         txt_item.position_texts()
@@ -624,8 +622,7 @@ class Game:
         txt_died = TextLine(self, YOU_DIED,
                             font_size=0.2,
                             above=btn_continue,
-                            text_colour=RED,
-                            text_hover_colour=RED)
+                            text_colour=RED)
         views.append(txt_died)
 
         btn_quit = Button(self, QUIT,

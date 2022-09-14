@@ -56,7 +56,7 @@ class View(ABC, pygame.sprite.Sprite):
                  position=(0, 0), above=None, below=None, to_left_of=None, to_right_of=None, centre_between=None,
                  margin=0.02, padding=0.02,
                  frame_condition=NEVER, frame_thickness=0.005, corner_radius=0.01,
-                 frame_colour=BLACK, frame_hover_colour=SMOKE):
+                 frame_colour=BLACK, frame_hover_colour=None):
         super().__init__()
 
         # The game is passed as an attribute to access its attributes and methods:
@@ -79,7 +79,10 @@ class View(ABC, pygame.sprite.Sprite):
         self.frame_condition = frame_condition
         # The colour of the frame:
         self.frame_colour = frame_colour
-        self.frame_hover_colour = frame_hover_colour
+        if frame_hover_colour is None:
+            self.frame_hover_colour = frame_colour
+        else:
+            self.frame_hover_colour = frame_hover_colour
 
         # Converting frame thickness and corner radius from a ratio of the screen size to pixels:
         self.thickness = self.game.unit_to_pixel(frame_thickness)
@@ -217,7 +220,7 @@ class TextLine(View):
                  centre_between=None,
                  margin=0.02, padding=0.02,
                  frame_condition=View.NEVER, frame_thickness=0.005, corner_radius=0.01,
-                 frame_colour=BLACK, text_colour=BLACK, frame_hover_colour=BLACK, text_hover_colour=BLACK):
+                 frame_colour=BLACK, text_colour=BLACK, frame_hover_colour=None, text_hover_colour=None):
         # Converting font size from a ratio of the screen size to pixels:
         self.font_size = game.unit_to_pixel(font_size)
         self.font = game.get_font(self.font_size)
@@ -226,7 +229,10 @@ class TextLine(View):
 
         # The colour of the text:
         self.text_colour = text_colour
-        self.text_hover_colour = text_hover_colour
+        if text_hover_colour is None:
+            self.text_hover_colour = text_colour
+        else:
+            self.text_hover_colour = text_hover_colour
 
         super().__init__(game, size=game.pixel_to_unit_point(self.text.get_size()), visible=visible,
                          position=position, above=above, below=below, to_left_of=to_left_of, to_right_of=to_right_of,
@@ -284,7 +290,7 @@ class Text(View):
                  centre_between=None,
                  margin=0.02, padding=0.02,
                  frame_condition=View.ALWAYS, frame_thickness=0.005, corner_radius=0.01,
-                 frame_colour=BLACK, text_colour=BLACK, frame_hover_colour=BLACK, text_hover_colour=BLACK):
+                 frame_colour=BLACK, text_colour=BLACK, frame_hover_colour=None, text_hover_colour=None):
         # Converting font size from a ratio of the screen size to pixels:
         self.font_size = game.unit_to_pixel(font_size)
         self.font = game.get_font(self.font_size)
@@ -402,7 +408,7 @@ class Image(View):
                  margin=0.02, padding=0.02,
                  frame_condition=View.NEVER, frame_thickness=0.005, corner_radius=0.01,
                  frame_colour=BLACK,
-                 frame_hover_colour=BLACK):
+                 frame_hover_colour=None):
         # Setting up the image icon:
         self.icon = None
 
@@ -636,7 +642,7 @@ class ProgressBar(View):
                  margin=0.02, padding=0.01,
                  frame_condition=View.ALWAYS, frame_thickness=0.005, corner_radius=0.01,
                  bar_colour=RED, frame_colour=BLACK, text_colour=WHITE,
-                 frame_hover_colour=BLACK, text_hover_colour=BLACK):
+                 frame_hover_colour=None, text_hover_colour=None):
 
         self.orientation = orientation
 
