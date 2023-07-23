@@ -1,10 +1,16 @@
-import javax.jws.WebParam.Mode;
 
 class Algorithms{
 
     public static void main(String[] args) {
+        // The main method is called when the program is run:
         Algorithms algorithms = new Algorithms();
-        System.out.println(algorithms.bubbleSort(new int[]{1, 4, 3, 5, 6, 3, 4, 6, 4}));
+
+        int[] values = new int[]{1, 4, 3, 5, 6, 3, 4, 6, 4};
+        values = algorithms.bubbleSort(values);
+
+        for (int value: values) {
+            System.out.println(value);
+        }
     }
 
     public int linearSearch(String[] values, String target){
@@ -18,6 +24,7 @@ class Algorithms{
         }
         return -1;
 }
+
     public int recursiveBinarySearch(int[] values, int target, int start, int end){
         int midpoint = (start + end) / 2;
 
@@ -44,8 +51,8 @@ class Algorithms{
     }
 
     public int[] bubbleSort(int[] values){
-        boolean sorted = false;
         int temp;
+        boolean sorted = false;
 
         while (!sorted) {
             sorted = true;
@@ -83,9 +90,4 @@ class Algorithms{
         return values;
     }
 
-
     }
-
-}
-
-
