@@ -2,7 +2,7 @@
 def is_pandigital(num):
     num_str = str(num)
     degree = len(num_str)
-    return all([str(digit) in num_str for digit in range(1, degree + 1)])
+    return all([num_str.count(str(digit)) == 1 for digit in range(1, degree + 1)])
 
 
 def get_primes(limit):
@@ -23,6 +23,6 @@ def get_primes(limit):
     # If the number is prime (i.e. the value is true), including that number in the new list:
     return [i for i, is_prime in enumerate(numbers) if is_prime]
 
-# Pandigital numbers can be 8-digits max:
+# Pandigital numbers can be 9-digits max:
 primes = get_primes(987_654_321)
 largest = max([prime for prime in primes if is_pandigital(prime)])

@@ -1,7 +1,8 @@
 
 def is_pandigital(num):
     num_str = str(num)
-    return all([str(digit) in num_str for digit in range(1, 10)])
+    degree = len(num_str)
+    return all([num_str.count(str(digit)) == 1 for digit in range(1, degree + 1)])
 
 
 num = 1
