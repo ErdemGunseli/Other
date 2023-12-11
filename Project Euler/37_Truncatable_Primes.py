@@ -1,10 +1,3 @@
-
-def is_pandigital(num):
-    num_str = str(num)
-    degree = len(num_str)
-    return all([num_str.count(str(digit)) == 1 for digit in range(1, degree + 1)])
-
-
 def get_primes(limit):
     if limit < 2: return []
 
@@ -23,6 +16,27 @@ def get_primes(limit):
     # If the number is prime (i.e. the value is true), including that number in the new list:
     return [i for i, is_prime in enumerate(numbers) if is_prime]
 
-# Pandigital numbers can be 9-digits max:
-primes = get_primes(987_654_321)
-largest = max([prime for prime in primes if is_pandigital(prime)])
+
+def is_prime(num):
+    if num < 2: return False
+
+    for i in range(2, int(num**0.5) + 1):
+        if num % i == 0: return False
+    return True
+
+
+def is_truncatable(num):
+    num_str = str(num)
+
+    if not is_prime(num): return False
+
+    for i in range(1, len(num_str)):
+        if not(is_prime(int(num_str[:-i])) and is_prime(int(num_str[i:]))): return False
+    return True
+
+
+# 2, 3, 5 and 7 are not truncatable:
+primes = get_primes(1_000_000)[4::]
+
+result = [i for i in primes if is_truncatable(i)]
+print(f"Sum: {sum(result)}, Result: {result}")

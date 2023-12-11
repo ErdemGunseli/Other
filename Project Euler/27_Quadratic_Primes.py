@@ -2,7 +2,7 @@ import math
 
 
 def is_prime(n):
-    if n < 0: n = -n
+    if n < 2: return False
 
     for i in range(2, math.ceil(math.sqrt(n)) + 1):
         if n % i == 0: return False
@@ -13,8 +13,8 @@ longest_prime_sequence = 0
 product = 0
 
 for a in range(-999, 1000):
-    # b has to be prime since when n=0, expression simplifies to b:
-    for b in [num for num in range(-1000, 1001) if is_prime(num)]:
+    # abs(b) has to be prime since when n=0, expression simplifies to b:
+    for b in [num for num in range(-1000, 1001) if is_prime(abs(num))]:
 
         done = False
         current_sequence_length = 0
