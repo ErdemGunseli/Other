@@ -33,3 +33,4 @@ def transfer(disc_count, discs=None, start=0, target=2, temp=1):
 
 if __name__ == "__main__":
     transfer(25)
+
