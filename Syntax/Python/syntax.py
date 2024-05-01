@@ -83,6 +83,7 @@ add = lambda x, y: x + y
 # Default parameter value syntax:
 def add(x, y, z=0): return x + y + z
 
+
 # Generator function:
 def fibonacci():
     # It's possible to declare multiple variables on one line:
@@ -107,7 +108,7 @@ while index < 10:
 for number in fibonacci_iterator:
     # Outputs 55, 89, 144, 233, 377, 610, 987, 1597:
     print(number)
-    if number >= 1000:break
+    if number >= 1000: break
 
 
 
@@ -249,7 +250,7 @@ print(my_square.area()) # Outputs 100
 # The search pattern is defined between two slashes, and search flags can be added at the end.
 
 # Flags:
-# Whilst JS uses flags such as g, i, m, u, s, y, Python uses re.search(pattern, string, flags=0). TODO: CHANGE
+# Whilst JS uses flags such as g, i, m, u, s, y, Python uses re.search(pattern, string, flags=0).
 
 # Special characters can be combined within the search expression to match more complex patterns:
 #     "|": logical OR (to match one string or the other)
