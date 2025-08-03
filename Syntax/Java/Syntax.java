@@ -16,7 +16,7 @@ public class Syntax {
         // long  (64 bits), 'L' suffix is needed:
         long myLong = 1000000000000000000L; 
 
-        // flat is 32 bits, 'f' suffix is needed:
+        // float is 32 bits, 'f' suffix is needed:
         float myFloat = 5.5f; 
 
         // double is 64 bits:
@@ -30,10 +30,8 @@ public class Syntax {
         // The 'final' keyword is used for constants:
         final String HELLO = "Hello"; 
 
-        // Strings are immutable:
+        // Strings are technically immutable - when reassigning a new value is created in memory.
         String myString = "World";
-
-        // When reassigning a string's value, a new string is created in memory.
         myString = HELLO + " " + myString;
         System.out.println(myString); // "Hello World"
         System.out.println(String.format("%s World", HELLO)); // String formatting
@@ -165,29 +163,26 @@ public class Syntax {
             i++;
         }
 
-
         i = 0;
         // Do while loop, condition checked at the end so runs at least once:
         do {
             System.out.println(i);
             i++;
         } while (i < 5);
-        
-
-        // ToDo: FOR EACH
 
 
+        // For-each loop, used for iterating over collections:
+        for (String name : myArrayList) {
+            System.out.println(name);
+        }
 
-        /* __________Functions__________ */
-
-        /* __________Error Handling__________ */
 
         /* __________Object Oriented Programming__________ 
         In this demonstration, for the sake of simplicity, all classes are defined in the same file.
         However, in practice, each class should be defined in its own file.
         */
 
-        // This happens to be an abstract class. Abstract classes cannot be instantiated, but its children can.
+        // This is an abstract class. Abstract classes cannot be instantiated, but its children can.
         // They can have both normal and abstract methods (abstract methods need to be implemented by the children).
         abstract class Shape {
             String color;
@@ -257,7 +252,7 @@ public class Syntax {
 
 
         /* The 'static' keyword makes an attribute/method belong to the class, not the object.
-         This means that the attribute/method can be accessed without creating an object of the class.
+         This means that the attribute/method can be accessed without creating an instance of the class.
         */
         class Circle extends Shape {
             // Here, the static keyword is commented out because it cannot be used in an inner class:
@@ -283,9 +278,8 @@ public class Syntax {
         It has access to all the attributes and methods of the outer class, and can define its own.
         Using inner classes can make code easier to understand.
         Technically, all the classes in this file are inner classes of the Syntax class. 
-        Usually, each class in Java is defined in its own file. This is just for demonstration purposes
+        Usually, each class in Java is defined in its own file. This is just for demonstration/
          */
-
 
         /*  An interface is a collection of constants and method signatures (method identifier, return type, parameters).
         public interface Animal {
@@ -337,17 +331,5 @@ public class Syntax {
         }
 
         */
-
-        
-
-        /* __________RegEx__________ */
-
-        /* __________Concurrency__________ */
-
-
-
-
-
-
     }
 }

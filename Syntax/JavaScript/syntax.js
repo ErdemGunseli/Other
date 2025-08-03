@@ -1,6 +1,7 @@
 /* __________Data Types__________ 
 'let' is used for variables, 'const' for constants:
-Using 'var' can lead to unexpected results because it is function-scoped - defined throughout the function in which it is declared.
+Using 'var' can lead to unexpected results because it is function-scoped 
+- defined throughout the function in which it is declared.
 'let' and 'const' are block-scoped, defined only within the code block in which they are declared.
 */
 let variable; // Undefined
@@ -48,7 +49,6 @@ switch(age % 2) {
         console.log("My age is odd.");
         break;
     
-
     // 'default' runs if no case matches:
     default:
         console.log("age is not a number");
@@ -195,8 +195,10 @@ let promise = new Promise((resolve, reject) => {
 
     // The promise can be resolved or rejected based on some condition:
     if(condition) {
+        // The argument is the final value of the promise:
         resolve("Promise is resolved");
     } else {
+        // The argument is the reason for the rejection:
         reject("Promise is rejected");
     }
 });
@@ -485,6 +487,22 @@ and contains the index and the value (this was used for the first 'range' implem
 for (const [i, item] of array.entries()) {
     console.log(`Current index: ${i}, Current value: ${item}`);
 }
+
+
+/* __________Event Listeners__________ 
+An event listener waits for an event to occur, and executes a callback function.
+*/
+
+import { EventEmitter } from 'events';
+const event = new EventEmitter();
+
+// This creates an event listener with the identifier "test", and a callback function to be ran when the event occurs:
+event.on("test", () => {
+    console.log("Test has occurred");
+});
+
+// Emitting the event causes the callback function to be ran:
+event.emit("test");
 
 
 
